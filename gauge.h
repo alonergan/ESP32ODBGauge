@@ -7,7 +7,9 @@
 class Gauge {
 public:
   Gauge(TFT_eSPI* display) : display(display) {}
-  virtual void render(double reading) = 0;  // Pure virtual function
+  virtual void render(double reading) = 0;
+  virtual void initialize() = 0;
+  virtual void displayStats(float fps, double frameAvg, double queryAvg) = 0;
 protected:
   TFT_eSPI* display;
 };

@@ -22,6 +22,7 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic,
 }
 
 bool connectToOBD() {
+  BLEDevice::init("ESP32_OBD");
   pClient = BLEDevice::createClient();
   pClient->setClientCallbacks(new MyClientCallback());
 

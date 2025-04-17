@@ -1,19 +1,20 @@
 #include "needle_gauge.h"
+#include "g_meter.h"
 #include "bluetooth.h"
 #include "commands.h"
 
 TFT_eSPI display = TFT_eSPI();
 Gauge* currentGauge;
 Commands commands;
-int selectedGauge = 0;
+int selectedGauge = 0;                      // [0: RPM, 1: Boost, 2: Torque, 3: G-Meter]        
 
 long lastSensorUpdate = 0;
 long lastAnimationFrame = 0;
 const unsigned long animationInterval = 15; // Target ~66 FPS
-const unsigned long sensorInterval = 100;  // Query every 100 ms (10Hz)
+const unsigned long sensorInterval = 100;   // Query every 100 ms (10Hz)
 double targetValue = 0.0;
 double displayedValue = targetValue;
-double alpha = 0.25;
+double alpha = 0.2;
 
 unsigned long fpsStartTime = 0;
 unsigned long querySum = 0;
@@ -25,6 +26,9 @@ float fps = 0;
 
 void setup() {
     Serial.begin(115200);
+
+    // Initialize buttons
+    pinMode(BUTTON_PIN, INPUT);
 
     // Initialize display
     display.init();
@@ -54,6 +58,38 @@ void setup() {
 }
 
 void loop() {
+    // Check for button input and switch screens
+    if (digitalRead(BUTTON_PIN) == HIGH) {
+        selectedGauge++;
+        if (selectedGauge > 3) {
+            selectedGauge = 0;
+        }
+
+        // If gauge is 3 then show G-Meter
+        delete currentGauge;
+        if (selectedGauge == 3) {
+            currentGauge = new GMeter(&display);
+            currentGauge->initialize();
+        } else {
+            currentGauge = new NeedleGauge(&display, selectedGauge);
+            currentGauge->initialize();
+        }
+        
+        // Loop to hold while button is pressed so other code doesnt execute
+        while(digitalRead(BUTTON_PIN) == HIGH) {}
+
+        lastSensorUpdate = millis();
+        lastAnimationFrame = millis();
+    }
+
+    // If GMeter dont bother trying to run queries
+    if (selectedGauge == 3) {
+        // Read meter
+        currentGauge->render(0.0);
+        delay(animationInterval); // Tie to animation target fps
+        return;
+    }
+
     if (connected) {
         unsigned long now = millis();
         // Render as many frames as needed
@@ -87,7 +123,7 @@ void loop() {
         // Handle sensor query if needed
         if (now - lastSensorUpdate >= sensorInterval) {
             unsigned long start = millis();
-            double reading = commands.getRPM();
+            double reading = commands.getReading(selectedGauge);
             unsigned long end = millis();
             unsigned long duration = millis() - start;
             querySum += duration;

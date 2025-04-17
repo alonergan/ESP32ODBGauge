@@ -14,11 +14,7 @@ private:
 
 public:
     Commands();
-    double getRPM();
-    double getBarometricPressure();
-    double getEngineLoad();
-    double getTorque();
-    double getBoost();
+    double getReading(int selectedGauge);
     void initializeOBD();
 };
 

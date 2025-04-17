@@ -87,26 +87,31 @@ double Commands::query(int commandIndex) {
     }
 }
 
-double Commands::getRPM() {
-  return query(0);
-}
+double Commands::getReading(int selectedGauge) {
+    switch (selectedGauge) {
+        case 0:
+            // RPM
+            return query(0);
+        case 1: {
+            // Boost
+            double rpm = query(0);
+            double load = query(1);
+            double baro = query(2);
+            double fRpm = std::min(1.0, (rpm - 1500) / (4000 - 1500));
+            fRpm = std::max(0.0, fRpm);
 
-double Commands::getBarometricPressure() {
-  return query(1);
-}
-
-double Commands::getEngineLoad() {
-  return query(2);
-}
-
-double Commands::getTorque() {
-  // TODO
-  return 0.0;
-}
-
-double Commands::getBoost() {
-  // TODO
-  return 0.0;
+            double boost = 22.0 * (load / 100.0) * fRpm;
+            return boost;
+        }
+        case 2: {
+            // Torque
+            double ref = query(3);
+            double actual = query(4);
+            return (ref * (actual / 100.0));
+        }
+        default:
+            return 0.0;
+    }
 }
 
 // Initialize OBD communication

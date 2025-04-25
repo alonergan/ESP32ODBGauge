@@ -1,7 +1,10 @@
-#include "needle_gauge.h"
-#include "g_meter.h"
+#include <TFT_eSPI.h>
 #include "bluetooth.h"
 #include "commands.h"
+#include "needle_gauge.h"
+#include "g_meter.h"
+
+#define TEST_MODE true
 
 TFT_eSPI display = TFT_eSPI();
 Gauge* currentGauge;
@@ -28,11 +31,11 @@ void setup() {
     Serial.begin(115200);
 
     // Initialize buttons
-    pinMode(BUTTON_PIN, INPUT);
+    pinMode(BUTTON_PIN, INPUT_PULLDOWN);
 
     // Initialize display
     display.init();
-    display.setRotation(1);
+    display.setRotation(3);
     display.fillScreen(DISPLAY_BG_COLOR);
 
     // Add splash screen startup - TODO
@@ -43,7 +46,7 @@ void setup() {
     currentGauge->displayStats(0, 0, 0);
 
     // Attempt initial connection of OBD
-    if(connectToOBD()) {
+    if(!TEST_MODE && connectToOBD()) {
         // Success, initialize
         commands.initializeOBD();
         display.fillRect(300, 0, 20, 20, TFT_GREEN);
@@ -55,11 +58,16 @@ void setup() {
     lastSensorUpdate = millis();
     lastAnimationFrame = millis();
     fpsStartTime = millis();
+
+    Serial.print("Initial Button State: ");
+    Serial.println(digitalRead(BUTTON_PIN));
 }
 
 void loop() {
     // Check for button input and switch screens
     if (digitalRead(BUTTON_PIN) == HIGH) {
+        Serial.println(digitalRead(BUTTON_PIN));
+        Serial.println("Read Button State");
         selectedGauge++;
         if (selectedGauge > 3) {
             selectedGauge = 0;
@@ -135,6 +143,7 @@ void loop() {
         }
     } else {
         // Attempt reconnection
+        /**
         Serial.println("Attempting reconnection...");
         if(connectToOBD()) {
             // Success, reinitialize
@@ -143,5 +152,6 @@ void loop() {
         } else {
             display.fillRect(300, 0, 20, 20, TFT_RED);
         }
+        */
     }
 }

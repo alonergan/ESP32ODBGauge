@@ -1,8 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <TFT_eSPI.h>
-
 /*
   Hardware config
 */

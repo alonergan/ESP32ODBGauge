@@ -9,7 +9,7 @@
 TFT_eSPI display = TFT_eSPI();
 Gauge* currentGauge;
 Commands commands;
-int selectedGauge = 0;                      // [0: RPM, 1: Boost, 2: Torque, 3: G-Meter]        
+int selectedGauge = 2;                      // [0: RPM, 1: Boost, 2: Torque, 3: G-Meter]        
 
 long lastSensorUpdate = 0;
 long lastAnimationFrame = 0;
@@ -41,7 +41,7 @@ void setup() {
     // Add splash screen startup - TODO
 
     // Intialize gauge - default to RPM
-    currentGauge = new NeedleGauge(&display, 0); // RPM gauge
+    currentGauge = new NeedleGauge(&display, selectedGauge); // RPM gauge
     currentGauge->initialize();
     currentGauge->displayStats(0, 0, 0);
 

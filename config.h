@@ -22,6 +22,7 @@
 #define DISPLAY_CENTER_X DISPLAY_WIDTH / 2
 #define DISPLAY_CENTER_Y DISPLAY_HEIGHT / 2
 #define DISPLAY_BG_COLOR TFT_BLACK
+#define TFT_TRANSPARENT TFT_BLACK  // Explicitly match background
 
 /*
   Gauge params
@@ -58,13 +59,21 @@
 #define VALUE_TEXT_COLOR TFT_WHITE
 #define VALUE_FONT_SIZE 4
 
-
 /*
   GMeter Params
 */
-#define GMETER_PADDING 50
-#define GMETER_HEIGHT (DISPLAY_HEIGHT - GMETER_PADDING)
-#define GMETER_WIDTH (DISPLAY_HEIGHT - GMETER_PADDING)
-#define GMETER_CENTER (GMETER_HEIGHT / 2)
+#define GMETER_RADIUS 90  // Adjusted per user revision
+#define GMETER_WIDTH (2 * GMETER_RADIUS)
+#define GMETER_HEIGHT (2 * GMETER_RADIUS)
+#define GMETER_PADDING 10
+#define GMETER_TEXT_SIZE 2
+#define GMETER_TEXT_FONT 1
+#define GMETER_TEXT_COLOR TFT_RED
+#define GMETER_TEXT_OFFSET_X 35  // Reduced for tighter placement
+#define GMETER_TEXT_OFFSET_Y 15  // Symmetric vertical offset
+#define GMETER_POINT_RADIUS 5
+#define GMETER_POINT_COLOR TFT_RED
+#define GMETER_OUTLINE_COLOR TFT_WHITE
+#define GMETER_ERASE_COLOR TFT_BLACK
 
 #endif // CONFIG_H

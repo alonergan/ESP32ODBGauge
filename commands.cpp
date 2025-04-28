@@ -87,8 +87,8 @@ double Commands::query(int commandIndex) {
     }
 }
 
-double Commands::getReading(int selectedGauge) {
-    switch (selectedGauge) {
+double Commands::getReading(int selectedReading) {
+    switch (selectedReading) {
         case 0:
             // RPM
             return query(0);

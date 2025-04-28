@@ -92,9 +92,28 @@ void loop() {
 
     // If GMeter dont bother trying to run queries
     if (selectedGauge == 3) {
-        // Read meter
+        unsigned long start = millis();
         currentGauge->render(0.0);
-        delay(animationInterval); // Tie to animation target fps
+        unsigned long end = millis();
+        frameSum += (end - start);
+        frameCount++;
+        fpsFrameCount++;
+
+        // Display stats every 200 frames
+        if (fpsFrameCount >= 200) {
+            unsigned long fpsEndTime = millis();
+            float elapsed = (fpsEndTime - fpsStartTime) / 1000.0;
+            fps = fpsFrameCount / elapsed;
+            fpsFrameCount = 0;
+            fpsStartTime = millis();
+            double frameAvg = frameCount > 0 ? (frameSum / (double)frameCount) : 0;
+            currentGauge->displayStats(fps, frameAvg, -1.0);
+            querySum = 0;
+            frameSum = 0;
+            queryCount = 0;
+            frameCount = 0;
+        }
+
         return;
     }
 

@@ -9,7 +9,7 @@
 TFT_eSPI display = TFT_eSPI();
 Gauge* currentGauge;
 Commands commands;
-int selectedGauge = 2;                      // [0: RPM, 1: Boost, 2: Torque, 3: G-Meter]        
+int selectedGauge = 2;                      // [0: RPM, 1: Boost, 2: Torque, 3: G-Meter, 4: Acceleration Meter]        
 
 long lastSensorUpdate = 0;
 long lastAnimationFrame = 0;
@@ -75,7 +75,11 @@ void loop() {
 
         // If gauge is 3 then show G-Meter
         delete currentGauge;
-        if (selectedGauge == 3) {
+        if (selectedGauge == 4) {
+            currentGauge = new AccelerationMeter(&display);
+            currentGauge->initialize();
+        }
+        else if (selectedGauge == 3) {
             currentGauge = new GMeter(&display);
             currentGauge->initialize();
         } else {

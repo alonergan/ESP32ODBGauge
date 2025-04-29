@@ -76,5 +76,14 @@
 #define GMETER_OUTLINE_COLOR TFT_WHITE
 #define GMETER_HISTORY_COLOR 0x9cf3
 
+/*
+  Acceleration Meter Params
+*/
+#define AMETER_SPEED_LABEL "Speed"
+#define AMETER_TIME_LABEL "Time"
+#define AMETER_TIME_COLOR TFT_RED
+#define AMETER_SPEED_COLOR TFT_RED
+#define AMETER_V_PADDING 10
+
 
 #endif // CONFIG_H

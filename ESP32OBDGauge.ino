@@ -3,6 +3,7 @@
 #include "commands.h"
 #include "needle_gauge.h"
 #include "g_meter.h"
+#include "acceleration_meter.h"
 
 #define TEST_MODE true
 
@@ -69,7 +70,7 @@ void loop() {
         Serial.println(digitalRead(BUTTON_PIN));
         Serial.println("Read Button State");
         selectedGauge++;
-        if (selectedGauge > 3) {
+        if (selectedGauge > 4) {
             selectedGauge = 0;
         }
 

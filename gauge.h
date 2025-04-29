@@ -2,6 +2,8 @@
 #define GAUGE_H
 
 #include <TFT_eSPI.h>
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
 #include "config.h"
 
 class Gauge {

@@ -1,10 +1,7 @@
 #ifndef NEEDLE_GAUGE_H
 #define NEEDLE_GAUGE_H
 
-#include <math.h>
 #include "gauge.h"
-#include "config.h"
-#include <Arduino.h>
 
 class NeedleGauge : public Gauge {
 public:

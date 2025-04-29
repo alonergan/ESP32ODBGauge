@@ -10,6 +10,7 @@ public:
     Gauge(display),
     mpu(),
     combined(display),
+    history(display),
     maxX(display),
     maxY(display),
     minX(display),
@@ -38,6 +39,11 @@ public:
     combined.setColorDepth(8);
     combined.createSprite(GMETER_WIDTH + 2, GMETER_HEIGHT + 2);
     combined.fillSprite(TFT_TRANSPARENT);
+
+    // Create history sprite
+    history.setColorDepth(8);
+    history.createSprite(GMETER_WIDTH + 2, GMETER_HEIGHT + 2);
+    history.fillSprite(TFT_TRANSPARENT);
 
     // Draw initial outline and point
     drawOutline();
@@ -79,7 +85,7 @@ public:
 
 private:
   Adafruit_MPU6050 mpu;
-  TFT_eSprite combined, maxX, maxY, minX, minY;
+  TFT_eSprite combined, history, maxX, maxY, minX, minY;
   int minValue, maxValue, oldX, oldY;
   double oldGForceX, oldGForceY, minValueX, maxValueX, minValueY, maxValueY;
 
@@ -131,8 +137,12 @@ private:
       drawOutline();
       combined.fillCircle(posX - (gaugeCenterX - GMETER_RADIUS), posY - (gaugeCenterY - GMETER_RADIUS), GMETER_POINT_RADIUS, GMETER_POINT_COLOR);
 
-      // Push combined sprite
-      combined.pushSprite(gaugeCenterX - GMETER_RADIUS, gaugeCenterY - GMETER_RADIUS);
+      // Store point in history sprite
+      history.fillCircle(posX - (gaugeCenterX - GMETER_RADIUS), posY - (gaugeCenterY - GMETER_RADIUS), GMETER_POINT_RADIUS - 3, GMETER_HISTORY_COLOR);
+
+      // Push combined sprite over history
+      history.pushSprite(gaugeCenterX - GMETER_RADIUS, gaugeCenterY - GMETER_RADIUS, TFT_TRANSPARENT);
+      combined.pushSprite(gaugeCenterX - GMETER_RADIUS, gaugeCenterY - GMETER_RADIUS, TFT_TRANSPARENT);
 
       // Update old positions
       oldX = posX;

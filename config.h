@@ -62,7 +62,7 @@
 /*
   GMeter Params
 */
-#define GMETER_RADIUS 90  // Adjusted per user revision
+#define GMETER_RADIUS 90  
 #define GMETER_WIDTH (2 * GMETER_RADIUS)
 #define GMETER_HEIGHT (2 * GMETER_RADIUS)
 #define GMETER_PADDING 10
@@ -74,6 +74,7 @@
 #define GMETER_POINT_RADIUS 5
 #define GMETER_POINT_COLOR TFT_RED
 #define GMETER_OUTLINE_COLOR TFT_WHITE
-#define GMETER_ERASE_COLOR TFT_BLACK
+#define GMETER_HISTORY_COLOR 0x9cf3
+
 
 #endif // CONFIG_H

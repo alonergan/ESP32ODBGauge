@@ -16,9 +16,7 @@ Commands::Commands() : A(0), B(0) {}
 String Commands::sendCommand(String pid) {
     responseBuffer = "";
     String fullCmd = pid + "\r";
-    pWriteChar->writeValue(fullCmd);
     for (int i = 0; i < 200; i++) {
-        delay(1);
         if (responseBuffer.indexOf(">") != -1) {
             String fullResponse = responseBuffer;
             responseBuffer = "";

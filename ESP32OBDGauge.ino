@@ -3,6 +3,7 @@
 #include "commands.h"
 #include "needle_gauge.h"
 #include "g_meter.h"
+#include "command_test.h"
 
 #define TEST_MODE true
 
@@ -38,17 +39,13 @@ void setup() {
     display.setRotation(3);
     display.fillScreen(DISPLAY_BG_COLOR);
 
-    // Add splash screen startup - TODO
-
-    // Intialize gauge - default to RPM
-    currentGauge = new NeedleGauge(&display, selectedGauge); // RPM gauge
+    currentGauge = new CommandTest(&display);
     currentGauge->initialize();
-    currentGauge->displayStats(0, 0, 0);
 
     // Attempt initial connection of OBD
     if(!TEST_MODE && connectToOBD()) {
         // Success, initialize
-        commands.initializeOBD();
+        //commands.initializeOBD();
         display.fillRect(300, 0, 20, 20, TFT_GREEN);
     } else {
         display.fillRect(300, 0, 20, 20, TFT_RED);    
@@ -58,119 +55,53 @@ void setup() {
     lastSensorUpdate = millis();
     lastAnimationFrame = millis();
     fpsStartTime = millis();
-
-    Serial.print("Initial Button State: ");
-    Serial.println(digitalRead(BUTTON_PIN));
 }
 
 void loop() {
-    // Check for button input and switch screens
-    if (digitalRead(BUTTON_PIN) == HIGH) {
-        Serial.println(digitalRead(BUTTON_PIN));
-        Serial.println("Read Button State");
-        selectedGauge++;
-        if (selectedGauge > 3) {
-            selectedGauge = 0;
-        }
-
-        // If gauge is 3 then show G-Meter
-        delete currentGauge;
-        if (selectedGauge == 3) {
-            currentGauge = new GMeter(&display);
-            currentGauge->initialize();
-        } else {
-            currentGauge = new NeedleGauge(&display, selectedGauge);
-            currentGauge->initialize();
-        }
-        
-        // Loop to hold while button is pressed so other code doesnt execute
-        while(digitalRead(BUTTON_PIN) == HIGH) {}
-
-        lastSensorUpdate = millis();
-        lastAnimationFrame = millis();
-    }
-
-    // If GMeter dont bother trying to run queries
-    if (selectedGauge == 3) {
+    // No animation interval, query and update RPM sprite syncronously
+    if (connected) {
         unsigned long start = millis();
-        currentGauge->render(0.0);
+        Serial.println("Querying OBD...");
+        double reading = commands.getReading(0);
         unsigned long end = millis();
+        unsigned long duration = millis() - start;
+        Serial.println("Response time: " + String(duration) + " | Value: " + String(reading));
+        querySum += duration;
+        queryCount++;
+
+        start = millis();
+        currentGauge->render(reading);
+        end = millis();
         frameSum += (end - start);
         frameCount++;
         fpsFrameCount++;
-
-        // Display stats every 200 frames
-        if (fpsFrameCount >= 200) {
+        
+        // Display stats every 100 frames
+        if (fpsFrameCount >= 100) {
             unsigned long fpsEndTime = millis();
             float elapsed = (fpsEndTime - fpsStartTime) / 1000.0;
             fps = fpsFrameCount / elapsed;
             fpsFrameCount = 0;
             fpsStartTime = millis();
             double frameAvg = frameCount > 0 ? (frameSum / (double)frameCount) : 0;
-            currentGauge->displayStats(fps, frameAvg, -1.0);
+            double queryAvg = queryCount > 0 ? (querySum / (double)queryCount) : 0;
+            currentGauge->displayStats(fps, frameAvg, queryAvg);
             querySum = 0;
             frameSum = 0;
             queryCount = 0;
             frameCount = 0;
         }
-
-        return;
     }
-
-    if (connected) {
-        unsigned long now = millis();
-        // Render as many frames as needed
-        while (now - lastAnimationFrame >= animationInterval) {
-            displayedValue = displayedValue + alpha * (targetValue - displayedValue);
-            unsigned long start = millis();
-            currentGauge->render(displayedValue);
-            unsigned long end = millis();
-            frameSum += (end - start);
-            frameCount++;
-            fpsFrameCount++;
-            lastAnimationFrame += animationInterval;
-
-            // Display stats every 200 frames
-            if (fpsFrameCount >= 200) {
-                unsigned long fpsEndTime = millis();
-                float elapsed = (fpsEndTime - fpsStartTime) / 1000.0;
-                fps = fpsFrameCount / elapsed;
-                fpsFrameCount = 0;
-                fpsStartTime = millis();
-                double frameAvg = frameCount > 0 ? (frameSum / (double)frameCount) : 0;
-                double queryAvg = queryCount > 0 ? (querySum / (double)queryCount) : 0;
-                currentGauge->displayStats(fps, frameAvg, queryAvg);
-                querySum = 0;
-                frameSum = 0;
-                queryCount = 0;
-                frameCount = 0;
-            }
-        }
-
-        // Handle sensor query if needed
-        if (now - lastSensorUpdate >= sensorInterval) {
-            unsigned long start = millis();
-            double reading = commands.getReading(selectedGauge);
-            unsigned long end = millis();
-            unsigned long duration = millis() - start;
-            querySum += duration;
-            queryCount++;
-            if (reading >= 0.0) {
-                targetValue = reading;
-            }
-            lastSensorUpdate = now;
-        }
-    } else {
+    else {
         // Attempt reconnection
-        /**
         Serial.println("Attempting reconnection...");
         if(connectToOBD()) {
             // Success, reinitialize
-            commands.initializeOBD();
+            //commands.initializeOBD();
             display.fillRect(300, 0, 20, 20, TFT_GREEN);
         } else {
+            Serial.println("Connection failed...");
             display.fillRect(300, 0, 20, 20, TFT_RED);
         }
-        */
     }
 }

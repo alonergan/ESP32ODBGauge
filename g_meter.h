@@ -91,12 +91,17 @@ private:
 
   void drawOutline() {
     combined.fillSprite(TFT_TRANSPARENT);
+
+    // Version 2 - (1 circle with inner small dashes at 0, 90, 180, 270) - "Porsche Taycan style"
+    int lineSize = GMETER_LINE_SIZE;
+    for (int i = 3; i > 0; i--) {
+      int lineRadius = i * (GMETER_RADIUS / 4);
+      combined.drawLine(GMETER_RADIUS - lineRadius, GMETER_RADIUS - lineSize, GMETER_RADIUS - lineRadius, GMETER_RADIUS + lineSize, GMETER_OUTLINE_COLOR); // Left
+      combined.drawLine(GMETER_RADIUS + lineRadius, GMETER_RADIUS - lineSize, GMETER_RADIUS + lineRadius, GMETER_RADIUS + lineSize, GMETER_OUTLINE_COLOR); // Right
+      combined.drawLine(GMETER_RADIUS - lineSize, GMETER_RADIUS - lineRadius, GMETER_RADIUS + lineSize, GMETER_RADIUS - lineRadius, GMETER_OUTLINE_COLOR); // Top
+      combined.drawLine(GMETER_RADIUS - lineSize, GMETER_RADIUS + lineRadius, GMETER_RADIUS + lineSize, GMETER_RADIUS + lineRadius, GMETER_OUTLINE_COLOR); // Bottom
+    }
     combined.drawSmoothCircle(GMETER_RADIUS, GMETER_RADIUS, GMETER_RADIUS, GMETER_OUTLINE_COLOR, TFT_TRANSPARENT);
-    combined.drawSmoothCircle(GMETER_RADIUS, GMETER_RADIUS, 3 * (GMETER_RADIUS / 4), GMETER_OUTLINE_COLOR, TFT_TRANSPARENT);
-    combined.drawSmoothCircle(GMETER_RADIUS, GMETER_RADIUS, GMETER_RADIUS / 2, GMETER_OUTLINE_COLOR, TFT_TRANSPARENT);
-    combined.drawSmoothCircle(GMETER_RADIUS, GMETER_RADIUS, GMETER_RADIUS / 4, GMETER_OUTLINE_COLOR, TFT_TRANSPARENT);
-    combined.drawLine(0, GMETER_RADIUS, GMETER_WIDTH, GMETER_RADIUS, GMETER_OUTLINE_COLOR);  // Horizontal line
-    combined.drawLine(GMETER_RADIUS, 0, GMETER_RADIUS, GMETER_HEIGHT, GMETER_OUTLINE_COLOR); // Vertical line
   }
 
   void createTextSprite(TFT_eSprite& sprite, const char* text) {
@@ -104,11 +109,11 @@ private:
     sprite.setTextFont(GMETER_TEXT_FONT);
     sprite.setTextSize(GMETER_TEXT_SIZE);
     sprite.setTextColor(GMETER_TEXT_COLOR, TFT_TRANSPARENT);
-    int textWidth = sprite.textWidth("2.00"); // Fixed size for consistency
+    int textWidth = sprite.textWidth("0.00");
     int textHeight = sprite.fontHeight();
     sprite.createSprite(textWidth + 10, textHeight + 10);
     sprite.fillSprite(TFT_TRANSPARENT);
-    sprite.setCursor(5, 5);
+    sprite.setCursor((sprite.height() - textHeight) / 2, (sprite.width() - textWidth) / 2);
     sprite.println(text);
   }
 
@@ -138,7 +143,7 @@ private:
       combined.fillCircle(posX - (gaugeCenterX - GMETER_RADIUS), posY - (gaugeCenterY - GMETER_RADIUS), GMETER_POINT_RADIUS, GMETER_POINT_COLOR);
 
       // Store point in history sprite
-      history.fillCircle(posX - (gaugeCenterX - GMETER_RADIUS), posY - (gaugeCenterY - GMETER_RADIUS), GMETER_POINT_RADIUS - 3, GMETER_HISTORY_COLOR);
+      history.fillCircle(posX - (gaugeCenterX - GMETER_RADIUS), posY - (gaugeCenterY - GMETER_RADIUS), GMETER_POINT_RADIUS, GMETER_HISTORY_COLOR);
 
       // Push combined sprite over history
       history.pushSprite(gaugeCenterX - GMETER_RADIUS, gaugeCenterY - GMETER_RADIUS, TFT_TRANSPARENT);
@@ -183,7 +188,9 @@ private:
 
   void updateTextSprite(TFT_eSprite& sprite, String text) {
     sprite.fillSprite(TFT_TRANSPARENT);
-    sprite.setCursor(5, 5);
+    int textWidth = sprite.textWidth(text);
+    int textHeight = sprite.fontHeight();
+    sprite.setCursor((sprite.height() - textHeight) / 2, (sprite.width() - textWidth) / 2);
     sprite.println(text);
   }
 };

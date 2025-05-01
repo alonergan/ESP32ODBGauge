@@ -16,13 +16,21 @@ Commands::Commands() : A(0), B(0) {}
 String Commands::sendCommand(String pid) {
     responseBuffer = "";
     String fullCmd = pid + "\r";
-    for (int i = 0; i < 200; i++) {
+    unsigned long start = millis();
+    Serial.println("Sending command: " + pid);
+    pWriteChar->writeValue(fullCmd);
+    for (int i = 0; i < 1000; i++) {
+        delay(1);
         if (responseBuffer.indexOf(">") != -1) {
+            unsigned long end = millis();
+            unsigned long duration = end - start;
+            Serial.println("Response time: " + String(duration) + " | ResponseBuffer: " + responseBuffer);
             String fullResponse = responseBuffer;
             responseBuffer = "";
             return fullResponse;
         }
     }
+    Serial.println("Command " + pid + " timed out. Response buffer: " + responseBuffer);
     return "";
 }
 
@@ -110,12 +118,4 @@ double Commands::getReading(int selectedReading) {
         default:
             return 0.0;
     }
-}
-
-// Initialize OBD communication
-void Commands::initializeOBD() {
-    sendCommand("ATZ");
-    sendCommand("ATSP6");
-    sendCommand("ATSH 7DF");
-    sendCommand("0100");
 }

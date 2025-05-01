@@ -9,7 +9,7 @@
 
 TFT_eSPI display = TFT_eSPI();
 Gauge* currentGauge;
-Commands commands;
+Commands command;
 int selectedGauge = 2;                      // [0: RPM, 1: Boost, 2: Torque, 3: G-Meter]        
 
 long lastSensorUpdate = 0;
@@ -61,11 +61,10 @@ void loop() {
     // No animation interval, query and update RPM sprite syncronously
     if (connected) {
         unsigned long start = millis();
-        Serial.println("Querying OBD...");
-        double reading = commands.getReading(0);
+        double reading = command.getReading(0);
         unsigned long end = millis();
         unsigned long duration = millis() - start;
-        Serial.println("Response time: " + String(duration) + " | Value: " + String(reading));
+        //Serial.println("Response time: " + String(duration) + " | Value: " + String(reading));
         querySum += duration;
         queryCount++;
 

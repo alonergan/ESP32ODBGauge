@@ -22,7 +22,7 @@
 #define DISPLAY_CENTER_X DISPLAY_WIDTH / 2
 #define DISPLAY_CENTER_Y DISPLAY_HEIGHT / 2
 #define DISPLAY_BG_COLOR TFT_BLACK
-#define TFT_TRANSPARENT TFT_BLACK  // Explicitly match background
+#define TFT_TRANSPARENT TFT_BLACK
 
 /*
   Gauge params
@@ -69,12 +69,22 @@
 #define GMETER_TEXT_SIZE 2
 #define GMETER_TEXT_FONT 1
 #define GMETER_TEXT_COLOR TFT_RED
-#define GMETER_TEXT_OFFSET_X 35  // Reduced for tighter placement
-#define GMETER_TEXT_OFFSET_Y 15  // Symmetric vertical offset
+#define GMETER_TEXT_OFFSET_X 35
+#define GMETER_TEXT_OFFSET_Y 15  
 #define GMETER_POINT_RADIUS 5
 #define GMETER_POINT_COLOR TFT_RED
 #define GMETER_OUTLINE_COLOR TFT_WHITE
+#define GMETER_LINE_SIZE 3
 #define GMETER_HISTORY_COLOR 0x9cf3
+
+/*
+  Acceleration Meter Params
+*/
+#define AMETER_SPEED_LABEL "Speed"
+#define AMETER_TIME_LABEL "Time"
+#define AMETER_TIME_COLOR TFT_RED
+#define AMETER_SPEED_COLOR TFT_RED
+#define AMETER_V_PADDING 10
 
 
 #endif // CONFIG_H

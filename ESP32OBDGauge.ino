@@ -15,7 +15,7 @@ int selectedGauge = 2;                      // [0: RPM, 1: Boost, 2: Torque, 3: 
 long lastSensorUpdate = 0;
 long lastAnimationFrame = 0;
 const unsigned long animationInterval = 15; // Target ~66 FPS
-const unsigned long sensorInterval = 100;   // Query every 100 ms (10Hz)
+const unsigned long sensorInterval = 80;   // Query every 80 ms (12.5Hz)
 double targetValue = 0.0;
 double displayedValue = targetValue;
 double alpha = 0.2;
@@ -100,7 +100,7 @@ void loop() {
             delay(62); // Target 3.8 0-60 for testing
 
             // Display stats every 200 frames
-            if (fpsFrameCount >= 200) {
+            if (fpsFrameCount >= 50) {
                 unsigned long fpsEndTime = millis();
                 float elapsed = (fpsEndTime - fpsStartTime) / 1000.0;
                 fps = fpsFrameCount / elapsed;

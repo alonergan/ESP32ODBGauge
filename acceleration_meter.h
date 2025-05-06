@@ -17,7 +17,9 @@ public:
   timeValue(0.00),
   endSpeedReached(false),
   previousSpeed(0.00),
-  startTime(0) {}
+  startTime(0),
+  previousTime(0),
+  timerStarted(false) {}
 
   void initialize() override {
     display->fillScreen(DISPLAY_BG_COLOR);
@@ -87,56 +89,79 @@ public:
 private:
   TFT_eSprite time, speed, timeLabel, speedLabel, message;
   double timeValue, startValue, endValue, previousSpeed;
-  int startTime;
-  bool endSpeedReached;
+  unsigned long startTime, previousTime;
+  bool endSpeedReached, timerStarted;
 
-  void renderAccelerationMeter(double speedVal) {
-    // Grab current time
+void renderAccelerationMeter(double speedVal) {
     unsigned int now = millis();
 
-    // Start elapsed time if vehicle speed moves from standstill
-    Serial.printf("PreviousSpeed: %.1d | CurrentSpeed: %.1d", previousSpeed, speedVal);
-    if (previousSpeed == 0.0 && speedVal >= 0.0) {
-      Serial.println("Starting timer");
-      startTime = now;
+    // Start timer
+    if (!timerStarted && previousSpeed == 0.0 && speedVal >= 1.0) {
+        startTime = now;
+        timerStarted = true;
     }
 
-    // Return if end speed reached
     if (endSpeedReached) {
-      return;
+        return;
     }
 
-    // Target speed reached, set flag and display result in green
-    if (speedVal >= 60.0) {
-      endSpeedReached = true;
-      time.setTextColor(TFT_GREEN);
+    // Check for 60 mph with interpolation
+    if (timerStarted && previousSpeed < 60.0 && speedVal >= 60.0) {
+        double fraction = (60.0 - previousSpeed) / (speedVal - previousSpeed);
+        unsigned long interpolatedTime = previousTime + fraction * (now - previousTime);
+        unsigned int elapsedMilliseconds = interpolatedTime - startTime;
+        int seconds = elapsedMilliseconds / 1000;
+        int milliseconds = elapsedMilliseconds % 1000;
+        char timeStr[8];
+        sprintf(timeStr, "%d.%03d", seconds, milliseconds);
+        String currentTime = String(timeStr);
+        time.fillSprite(DISPLAY_BG_COLOR);
+        time.setTextColor(TFT_GREEN);
+        int textWidth = time.textWidth(currentTime);
+        int textHeight = time.fontHeight();
+        time.setCursor((time.width() - textWidth) / 2, (time.height() - textHeight) / 2);
+        time.println(currentTime);
+        time.pushSprite((DISPLAY_WIDTH - time.width()) / 2, 175);
+        endSpeedReached = true;
     }
-
-    // Get elapsed time convert this to ss:ms format and display time
-    unsigned int elapsedMilliseconds = now - startTime;
-    int seconds = elapsedMilliseconds / 1000;
-    int milliseconds = elapsedMilliseconds % 1000;
-    Serial.printf("Elapsed: %.1d | Seconds: %.1d | MilliSeconds: %.1d | startTime: %.1d", elapsedMilliseconds, seconds, milliseconds, startTime);
-    String currentTime = String(seconds) + "." + String(milliseconds);
-    int textWidth = time.textWidth(currentTime);
-    int textHeight = time.fontHeight();
-    time.fillSprite(DISPLAY_BG_COLOR);
-    time.setCursor((time.width() - textWidth) / 2, (time.height() - textHeight) / 2);
-    time.println(currentTime);
-    time.pushSprite((DISPLAY_WIDTH - time.width()) / 2, 175);      
+    else if (timerStarted) {
+        unsigned int elapsedMilliseconds = now - startTime;
+        int seconds = elapsedMilliseconds / 1000;
+        int milliseconds = elapsedMilliseconds % 1000;
+        char timeStr[8];
+        sprintf(timeStr, "%d.%03d", seconds, milliseconds);
+        String currentTime = String(timeStr);
+        int textWidth = time.textWidth(currentTime);
+        int textHeight = time.fontHeight();
+        time.fillSprite(DISPLAY_BG_COLOR);
+        time.setCursor((time.width() - textWidth) / 2, (time.height() - textHeight) / 2);
+        time.println(currentTime);
+        time.pushSprite((DISPLAY_WIDTH - time.width()) / 2, 175);
+    }
 
     // Update speed
-    String text = String((int) speedVal);
-    textWidth = speed.textWidth(text);
-    textHeight = speed.fontHeight();
+    String text = String((int)speedVal);
+    int textWidth = speed.textWidth(text);
+    int textHeight = speed.fontHeight();
     speed.fillSprite(DISPLAY_BG_COLOR);
     speed.setCursor((speed.width() - textWidth) / 2, (speed.height() - textHeight) / 2);
     speed.println(text);
     speed.pushSprite((DISPLAY_WIDTH - speed.width()) / 2, 60);
+
+    // Store previous values
+    previousSpeed = speedVal;
+    previousTime = now;
+  }
+
+  void reset() {
+    previousSpeed = 0.0;
+    previousTime = 0;
+    timerStarted = false;
+    endSpeedReached = false;
+    startTime = 0;
+    time.setTextColor(TFT_RED); // Reset to initial color
+    render(0.0); // Reset display to 0
   }
 };
-
-
-
 
 #endif //ACCEL_METER_H

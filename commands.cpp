@@ -1,12 +1,13 @@
 #include "commands.h"
 
 // Define the static commandConfig array
-const String Commands::commandConfig[5][8] = {
+const String Commands::commandConfig[6][8] = {
     {"RPM", "rpm", "010C", "0", "0", "7000", "2", "0"},
     {"Engine Load", "%", "0104", "1", "0", "100", "1", "0"},
-    {"Barometric Presure", "psi", "0133", "2", "0", "37", "1", "14.7"},
+    {"Barometric Pressure", "psi", "0133", "2", "0", "37", "1", "14.7"},
     {"Reference Torque", "lbft", "0163", "3", "0", "500", "2", "445"},
-    {"Actual Torque", "%", "0162", "4", "-125", "125", "1", "0"}
+    {"Actual Torque", "%", "0162", "4", "-125", "125", "1", "0"},
+    {"Speed", "mph", "010D", "5", "0", "158", "1", "0"}
 };
 
 // Constructor initializes A and B
@@ -82,6 +83,9 @@ double Commands::query(int commandIndex) {
         case 4:
             val = (double)A - 125.00;
             return val;
+        case 5:
+            val = A * 0.621371;
+            return val;
         default:
             return -1.0;
     }
@@ -108,6 +112,10 @@ double Commands::getReading(int selectedReading) {
             double ref = query(3);
             double actual = query(4);
             return (ref * (actual / 100.0));
+        }
+        case 3: {
+            // Speed
+            return query(5);
         }
         default:
             return 0.0;

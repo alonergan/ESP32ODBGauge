@@ -3,6 +3,7 @@
 #include "commands.h"
 #include "needle_gauge.h"
 #include "g_meter.h"
+#include "command_test.h"
 #include "acceleration_meter.h"
 
 #define TEST_MODE true
@@ -11,6 +12,7 @@ TFT_eSPI display = TFT_eSPI();
 Gauge* currentGauge;
 Commands commands;
 int selectedGauge = 2;                      // [0: RPM, 1: Boost, 2: Torque, 3: G-Meter, 4: Acceleration Meter]        
+
 
 long lastSensorUpdate = 0;
 long lastAnimationFrame = 0;
@@ -42,11 +44,11 @@ void setup() {
     // Intialize gauge - default to RPM
     currentGauge = new NeedleGauge(&display, selectedGauge); // RPM gauge
     currentGauge->initialize();
-    currentGauge->displayStats(0, 0, 0);
 
     // Attempt initial connection of OBD
     if(!TEST_MODE && connectToOBD()) {
         // Success, initialize
+        //commands.initializeOBD();
         display.fillRect(300, 0, 20, 20, TFT_GREEN);
     } else {
         display.fillRect(300, 0, 20, 20, TFT_RED);    
@@ -116,7 +118,6 @@ void loop() {
         }
 
         while (true) {
-            
         }
     }
 }

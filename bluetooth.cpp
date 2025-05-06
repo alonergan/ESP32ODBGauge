@@ -1,4 +1,5 @@
 #include "bluetooth.h"
+#include "commands.h"
 
 BLEAddress obdAddress(BLUETOOTH_DEVICE_ADDRESS);
 BLERemoteCharacteristic* pWriteChar = nullptr;
@@ -6,14 +7,14 @@ BLERemoteCharacteristic* pNotifyChar = nullptr;
 BLEClient* pClient = nullptr;
 boolean connected = false;
 String responseBuffer = "";
+Commands commands;
 
 class MyClientCallback : public BLEClientCallbacks {
   void onConnect(BLEClient* pclient) { connected = true; }
   void onDisconnect(BLEClient* pclient) { connected = false; }
 };
 
-static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, 
-                          uint8_t* pData, size_t length, bool isNotify) {
+static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, uint8_t* pData, size_t length, bool isNotify) {
   String chunk = "";
   for (int i = 0; i < length; i++) {
     chunk += (char)pData[i];
@@ -21,12 +22,35 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic,
   responseBuffer += chunk;
 }
 
+void intializeELM327() {
+  // Send initialization commands to ELM327
+  commands.sendCommand("AT D");     // Reset to default
+  commands.sendCommand("AT Z");     // Reset adapter
+  commands.sendCommand("AT E0");    // Echo off
+  commands.sendCommand("AT L0");    // Linefeeds off
+  commands.sendCommand("AT S0");    // Spaces off
+  commands.sendCommand("AT H0");    // Headers off
+  commands.sendCommand("AT SP 0");  // Set auto protocol
+  commands.sendCommand("AT ST 10"); // Set optimal timeout to 160ms
+  commands.sendCommand("AT AT 2");  // Set agressive adaptive timing
+}
+
 bool connectToOBD() {
+  // Initialize
+  Serial.println("Intializing BLEDevice");
   BLEDevice::init("ESP32_OBD");
+  BLEDevice::setMTU(517);
+  BLEDevice::setPower(ESP_PWR_LVL_P9);
+  Serial.println("Done initializing BLEDevice");
+
+  // Create BLE client
   pClient = BLEDevice::createClient();
   pClient->setClientCallbacks(new MyClientCallback());
 
+  Serial.println("Attempting device connection...");
   if (pClient->connect(obdAddress)) {
+    Serial.println("Device connected");
+    pClient->setMTU(517);
     BLERemoteService* pRemoteService = pClient->getService(BLUETOOTH_SERVICE_UUID);
     if (pRemoteService != nullptr) {
       pWriteChar = pRemoteService->getCharacteristic(BLUETOOTH_WRITE_CHAR_UUID);
@@ -34,6 +58,9 @@ bool connectToOBD() {
       if (pWriteChar != nullptr && pNotifyChar != nullptr && pNotifyChar->canNotify()) {
         pNotifyChar->registerForNotify(notifyCallback);
         pNotifyChar->getDescriptor(BLEUUID((uint16_t)0x2902))->writeValue((uint8_t*)"\x01\x00", 2);
+        Serial.println("Initializing ELM327");
+        intializeELM327();
+        Serial.println("Done initializing ELM327");
         return true;
       }
     }

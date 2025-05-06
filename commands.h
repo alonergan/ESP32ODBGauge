@@ -16,6 +16,8 @@ public:
     Commands();
     double getReading(int selectedGauge);
     void initializeOBD();
+    String sendCommand(String pid);
+
 };
 
 #endif // COMMANDS_H

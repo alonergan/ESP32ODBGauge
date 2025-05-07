@@ -12,5 +12,6 @@ extern boolean connected;
 extern String responseBuffer;
 
 bool connectToOBD();
+bool reconnectToOBD();
 
 #endif

@@ -8,12 +8,20 @@
 
 class Gauge {
 public:
-  Gauge(TFT_eSPI* display) : display(display) {}
-  virtual void render(double reading) = 0;
-  virtual void initialize() = 0;
-  virtual void displayStats(float fps, double frameAvg, double queryAvg) = 0;
+    enum GaugeType {
+        NEEDLE_GAUGE,
+        G_METER,
+        ACCELERATION_METER
+    };
+
+    Gauge(TFT_eSPI* display) : display(display) {}
+    virtual void render(double reading) = 0;
+    virtual void initialize() = 0;
+    virtual void displayStats(float fps, double frameAvg, double queryAvg) = 0;
+    virtual GaugeType getType() const = 0;
+
 protected:
-  TFT_eSPI* display;
+    TFT_eSPI* display;
 };
 
 #endif

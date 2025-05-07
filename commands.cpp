@@ -15,6 +15,10 @@ Commands::Commands() : A(0), B(0) {}
 
 // Send a command to the ELM327 and return the response
 String Commands::sendCommand(String pid) {
+    if (!connected || pWriteChar == nullptr) {
+        Serial.println("Cannot send command: No OBD connection");
+        return "";
+    }
     responseBuffer = "";
     String fullCmd = pid + "\r";
     unsigned long start = millis();
@@ -67,10 +71,18 @@ void Commands::parsePIDResponse(String response, String pid, int numBytes) {
 
 // Query a command and return the calculated value
 double Commands::query(int commandIndex) {
+    if (!connected || pWriteChar == nullptr) {
+        return 0.0; // Return default value if not connected
+    }
     String command = commandConfig[commandIndex][2];
     int numBytes = commandConfig[commandIndex][6].toInt();
     int formula = commandConfig[commandIndex][3].toInt();
     String response = sendCommand(command);
+
+    if (response == "") {
+        return 0.0;
+    }
+
     parsePIDResponse(response, command, numBytes);
     double val = 0.0;
     switch (formula) {
@@ -98,6 +110,9 @@ double Commands::query(int commandIndex) {
 }
 
 double Commands::getReading(int selectedReading) {
+    if (!connected || pWriteChar == nullptr) {
+        return 0.0; // Return default value if not connected
+    }
     switch (selectedReading) {
         case 0:
             // RPM

@@ -48,12 +48,22 @@ bool touch_touched(void)
   {
     touch_last_x = map(ts.points[0].x, min_x, max_x, 0, width - 1);
     touch_last_y = map(ts.points[0].y, min_y, max_y, 0, height - 1);
+    Serial.printf("Touched at x: %.1d. y: %.1d", touch_last_x, touch_last_y);
     return true;
   }
   else
   {
     return false;
   }
+}
+
+bool touch_getXY(uint16_t* x, uint16_t* y) {
+    if (touch_touched()) {
+        *x = touch_last_x;
+        *y = touch_last_y;
+        return true;
+    }
+    return false;
 }
 
 bool touch_has_signal(void)

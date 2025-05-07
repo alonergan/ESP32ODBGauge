@@ -8,7 +8,6 @@ private:
     int A;
     int B;
     static const String commandConfig[6][8];
-    String sendCommand(String pid);
     void parsePIDResponse(String response, String pid, int numBytes);
     double query(int commandIndex);
 
@@ -17,7 +16,6 @@ public:
     double getReading(int selectedGauge);
     void initializeOBD();
     String sendCommand(String pid);
-
 };
 
 #endif // COMMANDS_H

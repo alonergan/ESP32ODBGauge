@@ -1,123 +1,207 @@
 #include <TFT_eSPI.h>
+#include "touch.h"
 #include "bluetooth.h"
 #include "commands.h"
 #include "needle_gauge.h"
 #include "g_meter.h"
-#include "command_test.h"
 #include "acceleration_meter.h"
+#include "options_screen.h"
+#include "config.h"
 
-#define TEST_MODE true
+bool TESTMODE = true;
 
 TFT_eSPI display = TFT_eSPI();
-Gauge* currentGauge;
-Commands commands;
-int selectedGauge = 2;                      // [0: RPM, 1: Boost, 2: Torque, 3: G-Meter, 4: Acceleration Meter]        
-
-
-long lastSensorUpdate = 0;
-long lastAnimationFrame = 0;
-const unsigned long animationInterval = 15; // Target ~66 FPS
-const unsigned long sensorInterval = 80;   // Query every 80 ms (12.5Hz)
-double targetValue = 0.0;
-double displayedValue = targetValue;
-double alpha = 0.2;
-
-unsigned long fpsStartTime = 0;
-unsigned long querySum = 0;
-unsigned long frameSum = 0;
-int queryCount = 0;
-int frameCount = 0;
-int fpsFrameCount = 0;
-float fps = 0;
+Gauge* gauges[5];
+int currentGauge = 0;
+TaskHandle_t dataTaskHandle;
+SemaphoreHandle_t gaugeMutex;
+unsigned long lastTouchTime = 0;
+bool obdConnected = false;
+OptionsScreen* optionsScreen = nullptr;
+bool inOptionsScreen = false;
 
 void setup() {
     Serial.begin(115200);
+    display.begin();
+    display.setRotation(1); // Adjust as needed
+    touch_init(DISPLAY_WIDTH, DISPLAY_HEIGHT, ROTATION_NORMAL);
 
-    // Initialize buttons
-    pinMode(BUTTON_PIN, INPUT_PULLDOWN);
-
-    // Initialize display
-    display.init();
-    display.setRotation(3);
+    // Display OBD connecting message
     display.fillScreen(DISPLAY_BG_COLOR);
+    display.setCursor(50, 100);
+    display.setTextSize(2);
+    display.println("Connecting to OBD...");
+    delay(500); // Brief delay for visibility
 
-    // Intialize gauge - default to RPM
-    currentGauge = new NeedleGauge(&display, selectedGauge); // RPM gauge
-    currentGauge->initialize();
-
-    // Attempt initial connection of OBD
-    if(!TEST_MODE && connectToOBD()) {
-        // Success, initialize
-        //commands.initializeOBD();
-        display.fillRect(300, 0, 20, 20, TFT_GREEN);
+    // Attempt OBD connection
+    if (!TESTMODE) {
+      obdConnected = connectToOBD();
     } else {
-        display.fillRect(300, 0, 20, 20, TFT_RED);    
+      obdConnected = true;
     }
 
-    // Set animation params
-    lastSensorUpdate = millis();
-    lastAnimationFrame = millis();
-    fpsStartTime = millis();
+    // Show splash screen
+    display.fillScreen(DISPLAY_BG_COLOR);
+    display.setCursor(50, 100);
+    display.setTextSize(2);
+    display.println("Car Gauge Starting...");
+    delay(1000);
+
+    // Initialize mutex
+    gaugeMutex = xSemaphoreCreateMutex();
+
+    // Create all gauges
+    gauges[0] = new NeedleGauge(&display, 0); // RPM
+    gauges[1] = new NeedleGauge(&display, 1); // Boost
+    gauges[2] = new NeedleGauge(&display, 2); // Torque
+    gauges[3] = new GMeter(&display);
+    gauges[4] = new AccelerationMeter(&display);
+
+    // Initialize first gauge (RPM or GMeter if no OBD)
+    gauges[obdConnected ? 0 : 3]->initialize();
+    if (!obdConnected) {
+        currentGauge = 3; // Default to GMeter if OBD fails
+    }
+
+    // Start data fetching task on core 0
+    xTaskCreatePinnedToCore(
+        dataFetchingTask,
+        "DataFetching",
+        10000,
+        NULL,
+        1,
+        &dataTaskHandle,
+        0
+    );
+}
+
+void dataFetchingTask(void* parameter) {
+    Commands commands;
+    Adafruit_MPU6050 mpu;
+    mpu.begin();
+    mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
+    mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
+    unsigned long lastReconnectAttempt = 0;
+    const unsigned long RECONNECT_INTERVAL = 5000; // 5 seconds
+
+    while (true) {
+        int gaugeIndex;
+        xSemaphoreTake(gaugeMutex, portMAX_DELAY);
+        gaugeIndex = currentGauge;
+        xSemaphoreGive(gaugeMutex);
+
+        Gauge* gauge = gauges[gaugeIndex];
+        switch (gauge->getType()) {
+            case Gauge::NEEDLE_GAUGE:
+                if (obdConnected) {
+                    double reading = commands.getReading(gaugeIndex);
+                    NeedleGauge* ng = static_cast<NeedleGauge*>(gauge);
+                    ng->setReading(reading);
+                    vTaskDelay(100 / portTICK_PERIOD_MS); // 10Hz
+                } else {
+                    if (millis() - lastReconnectAttempt > RECONNECT_INTERVAL) {
+                        obdConnected = reconnectToOBD();
+                        lastReconnectAttempt = millis();
+                    }
+                    vTaskDelay(100 / portTICK_PERIOD_MS);
+                }
+                break;
+            case Gauge::G_METER:
+                {
+                    sensors_event_t accel, gyro, temp;
+                    mpu.getEvent(&accel, &gyro, &temp);
+                    GMeter* gm = static_cast<GMeter*>(gauge);
+                    gm->setAccelData(&accel, &gyro, &temp);
+                    vTaskDelay(20 / portTICK_PERIOD_MS); // 50Hz
+                }
+                break;
+            case Gauge::ACCELERATION_METER:
+                if (obdConnected) {
+                    double speed = commands.getReading(3); // Speed for AccelerationMeter
+                    AccelerationMeter* am = static_cast<AccelerationMeter*>(gauge);
+                    am->setSpeed(speed);
+                    vTaskDelay(100 / portTICK_PERIOD_MS); // 10Hz
+                } else {
+                    if (millis() - lastReconnectAttempt > RECONNECT_INTERVAL) {
+                        obdConnected = reconnectToOBD();
+                        lastReconnectAttempt = millis();
+                    }
+                    vTaskDelay(100 / portTICK_PERIOD_MS);
+                }
+                break;
+        }
+    }
 }
 
 void loop() {
-    // Check for button input and switch screens
-    if (digitalRead(BUTTON_PIN) == HIGH) {
-        selectedGauge++;
-        if (selectedGauge > 4) {
-            selectedGauge = 0;
-        }
+    static bool wasTouched = false;
+    static unsigned long touchStartTime = 0;
+    const unsigned long LONG_PRESS_THRESHOLD = 1000; // 1 second
+    const unsigned long DEBOUNCE_MS = 50; // Debounce period
 
-        // If gauge is 3 then show G-Meter
-        delete currentGauge;
-        if (selectedGauge == 4) {
-            currentGauge = new AccelerationMeter(&display);
-            currentGauge->initialize();
-        }
-        else if (selectedGauge == 3) {
-            currentGauge = new GMeter(&display);
-            currentGauge->initialize();
-        } else {
-            currentGauge = new NeedleGauge(&display, selectedGauge);
-            currentGauge->initialize();
-        }
-        
-        // Loop to hold while button is pressed so other code doesnt execute
-        while(digitalRead(BUTTON_PIN) == HIGH) {}
-
-        lastSensorUpdate = millis();
-        lastAnimationFrame = millis();
-    }
-
-    // If GMeter dont bother trying to run queries
-    if (selectedGauge == 4) {
-        for (double i = 0.0; i < 70.00; i += 1.0) {
-            unsigned long start = millis();
-            currentGauge->render(i);
-            unsigned long end = millis();
-            Serial.println(String(end - start));
-            frameSum += (end - start);
-            frameCount++;
-            fpsFrameCount++;
-            delay(62); // Target 3.8 0-60 for testing
-
-            // Display stats every 200 frames
-            if (fpsFrameCount >= 50) {
-                unsigned long fpsEndTime = millis();
-                float elapsed = (fpsEndTime - fpsStartTime) / 1000.0;
-                fps = fpsFrameCount / elapsed;
-                fpsFrameCount = 0;
-                fpsStartTime = millis();
-                double frameAvg = frameCount > 0 ? (frameSum / (double)frameCount) : 0;
-                currentGauge->displayStats(fps, frameAvg, -1.0);
-                querySum = 0;
-                frameSum = 0;
-                queryCount = 0;
-                frameCount = 0;
+    // Handle touch input
+    if (touch_touched()) {
+        if (millis() - lastTouchTime > DEBOUNCE_MS) {
+            lastTouchTime = millis();
+            if (!wasTouched) {
+                wasTouched = true;
+                touchStartTime = millis();
+            }
+            if (inOptionsScreen) {
+                // Process touch immediately in options screen
+                if (touch_last_x >= 0 && touch_last_y >= 0) {
+                    Serial.print("Touch at: "); Serial.print(touch_last_x); Serial.print(", "); Serial.println(touch_last_y);
+                    if (!optionsScreen->handleTouch(touch_last_x, touch_last_y)) {
+                        exitOptions();
+                    }
+                }
+            } else if (millis() - touchStartTime > LONG_PRESS_THRESHOLD) {
+                showOptions();
+                wasTouched = false;
             }
         }
-
-        while (true) {
+    } else if (wasTouched && !touch_touched()) {
+        wasTouched = false;
+        if (!inOptionsScreen && millis() - touchStartTime < LONG_PRESS_THRESHOLD) {
+            switchToNextGauge();
         }
     }
+
+    // Render
+    if (!inOptionsScreen) {
+        xSemaphoreTake(gaugeMutex, portMAX_DELAY);
+        gauges[currentGauge]->render(0.0);
+        xSemaphoreGive(gaugeMutex);
+    }
+
+    // Limit to ~30 FPS
+    delay(33);
+}
+
+void switchToNextGauge() {
+    xSemaphoreTake(gaugeMutex, portMAX_DELAY);
+    if (obdConnected) {
+        currentGauge = (currentGauge + 1) % 5;
+    } else {
+        currentGauge = 3; // Stay on GMeter if OBD not connected
+    }
+    gauges[currentGauge]->initialize();
+    xSemaphoreGive(gaugeMutex);
+}
+
+void showOptions() {
+    inOptionsScreen = true;
+    optionsScreen = new OptionsScreen(&display, gauges, 5);
+    optionsScreen->initialize();
+}
+
+void exitOptions() {
+    if (optionsScreen) {
+        delete optionsScreen;
+        optionsScreen = nullptr;
+    }
+    inOptionsScreen = false;
+    xSemaphoreTake(gaugeMutex, portMAX_DELAY);
+    gauges[currentGauge]->initialize();
+    xSemaphoreGive(gaugeMutex);
 }

@@ -24,7 +24,7 @@ void setup() {
     Serial.begin(115200);
     display.begin();
     display.setRotation(1); // Adjust as needed
-    touch_init(DISPLAY_WIDTH, DISPLAY_HEIGHT, ROTATION_NORMAL);
+    touch_init(DISPLAY_WIDTH, DISPLAY_HEIGHT, display.getRotation());
 
     // Display OBD connecting message
     display.fillScreen(DISPLAY_BG_COLOR);

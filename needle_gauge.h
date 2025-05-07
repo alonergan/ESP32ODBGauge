@@ -23,7 +23,9 @@ public:
         sweepState(SWEEP_UP),
         sweepStartTime(0),
         sweepValue(0.0),
-        needleColor(NEEDLE_COLOR_PRIMARY) {}
+        needleColor(NEEDLE_COLOR_PRIMARY),
+        outlineColor(GAUGE_FG_COLOR),
+        valueColor(VALUE_TEXT_COLOR) {}
 
     void initialize() override {
         display->fillScreen(DISPLAY_BG_COLOR);
@@ -32,6 +34,7 @@ public:
         createNeedle();
         createValue();
         createEraser();
+        gaugeOutline.pushSprite(DISPLAY_CENTER_X - GAUGE_RADIUS, 0);
         plotNeedle(currentAngle);
         plotValue(0.0);
 
@@ -58,6 +61,19 @@ public:
         gaugeNeedle.deleteSprite();
         createNeedle();
         plotNeedle(currentAngle);
+    }
+
+    void setOutlineColor(uint16_t color) {
+        outlineColor = color;
+        gaugeOutline.deleteSprite();
+        createOutline();
+    }
+
+    void setValueColor(uint16_t color) {
+        valueColor = color;
+        gaugeValue.deleteSprite();
+        createValue();
+        plotValue(0.0);
     }
 
     void render(double) override {
@@ -130,7 +146,7 @@ private:
     int16_t oldAngle;
     double minValue, maxValue;
     String valueLabel, valueUnits, valueType;
-    uint16_t needleColor; // Runtime needle color
+    uint16_t needleColor, outlineColor, valueColor; // Runtime needle color
 
     // Sweep state
     enum SweepState { SWEEP_UP, SWEEP_DOWN, SWEEP_COMPLETE };
@@ -146,11 +162,12 @@ private:
             return;
         }
         gaugeOutline.fillSprite(GAUGE_BG_COLOR);
-        gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS - GAUGE_LINE_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, GAUGE_FG_COLOR, GAUGE_BG_COLOR, true);
-        gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS - GAUGE_LINE_WIDTH - GAUGE_ARC_WIDTH, GAUGE_RADIUS - (GAUGE_LINE_WIDTH * 2) - GAUGE_ARC_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, GAUGE_FG_COLOR, GAUGE_BG_COLOR, true);
+        gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS - GAUGE_LINE_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, outlineColor, GAUGE_BG_COLOR, true);
+        gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS - GAUGE_LINE_WIDTH - GAUGE_ARC_WIDTH, GAUGE_RADIUS - (GAUGE_LINE_WIDTH * 2) - GAUGE_ARC_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, outlineColor, GAUGE_BG_COLOR, true);
 
         gaugeOutline.setTextFont(1);
         gaugeOutline.setTextSize(GAUGE_LABEL_SIZE);
+        gaugeOutline.setTextColor(outlineColor);
         int textWidth = gaugeOutline.textWidth(valueLabel);
         int x = (GAUGE_WIDTH - textWidth) / 2;
         gaugeOutline.drawString(valueLabel, x, GAUGE_RADIUS - 20);
@@ -159,8 +176,6 @@ private:
         textWidth = gaugeOutline.textWidth(valueUnits);
         x = (GAUGE_WIDTH - textWidth) / 2;
         gaugeOutline.drawString(valueUnits, x, GAUGE_RADIUS + 20);
-
-        gaugeOutline.pushSprite(DISPLAY_CENTER_X - GAUGE_RADIUS, 0);
     }
 
     void createNeedle() {
@@ -182,7 +197,7 @@ private:
         }
         gaugeValue.fillSprite(VALUE_BG_COLOR);
         gaugeValue.setTextFont(1);
-        gaugeValue.setTextColor(VALUE_TEXT_COLOR);
+        gaugeValue.setTextColor(valueColor);
         gaugeValue.setTextSize(VALUE_FONT_SIZE);
     }
 

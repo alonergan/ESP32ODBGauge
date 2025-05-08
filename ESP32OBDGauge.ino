@@ -1,4 +1,5 @@
 #include <TFT_eSPI.h>
+#include <TJpg_Decoder.h>
 #include "touch.h"
 #include "bluetooth.h"
 #include "commands.h"
@@ -7,6 +8,7 @@
 #include "acceleration_meter.h"
 #include "options_screen.h"
 #include "config.h"
+#include "s4_logo.h"
 
 bool TESTMODE = true;
 
@@ -26,26 +28,12 @@ void setup() {
     display.setRotation(1); // Adjust as needed
     touch_init(DISPLAY_WIDTH, DISPLAY_HEIGHT, display.getRotation());
 
-    // Display OBD connecting message
-    display.fillScreen(DISPLAY_BG_COLOR);
-    display.setCursor(50, 100);
-    display.setTextSize(2);
-    display.println("Connecting to OBD...");
-    delay(500); // Brief delay for visibility
-
     // Attempt OBD connection
     if (!TESTMODE) {
       obdConnected = connectToOBD();
     } else {
       obdConnected = true;
     }
-
-    // Show splash screen
-    display.fillScreen(DISPLAY_BG_COLOR);
-    display.setCursor(50, 100);
-    display.setTextSize(2);
-    display.println("Car Gauge Starting...");
-    delay(1000);
 
     // Initialize mutex
     gaugeMutex = xSemaphoreCreateMutex();
@@ -73,6 +61,12 @@ void setup() {
         &dataTaskHandle,
         0
     );
+}
+
+bool display_image(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap) {
+    if ( y >= display.height() ) return 0;
+    display.pushImage(x, y, w, h, bitmap);
+    return 1;
 }
 
 void dataFetchingTask(void* parameter) {
@@ -137,7 +131,7 @@ void loop() {
     static bool wasTouched = false;
     static unsigned long touchStartTime = 0;
     const unsigned long LONG_PRESS_THRESHOLD = 1000; // 1 second
-    const unsigned long DEBOUNCE_MS = 50; // Debounce period
+    const unsigned long DEBOUNCE_MS = 75; // Debounce period
 
     // Handle touch input
     if (touch_touched()) {
@@ -174,8 +168,8 @@ void loop() {
         xSemaphoreGive(gaugeMutex);
     }
 
-    // Limit to ~30 FPS
-    delay(33);
+    // Limit to ~100 FPS
+    delay(10);
 }
 
 void switchToNextGauge() {

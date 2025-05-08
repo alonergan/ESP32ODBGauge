@@ -165,17 +165,18 @@ private:
         gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS - GAUGE_LINE_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, outlineColor, GAUGE_BG_COLOR, true);
         gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS - GAUGE_LINE_WIDTH - GAUGE_ARC_WIDTH, GAUGE_RADIUS - (GAUGE_LINE_WIDTH * 2) - GAUGE_ARC_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, outlineColor, GAUGE_BG_COLOR, true);
 
-        gaugeOutline.setTextFont(1);
-        gaugeOutline.setTextSize(GAUGE_LABEL_SIZE);
+        gaugeOutline.setFreeFont(FONT_BOLD_14);
         gaugeOutline.setTextColor(outlineColor);
         int textWidth = gaugeOutline.textWidth(valueLabel);
         int x = (GAUGE_WIDTH - textWidth) / 2;
         gaugeOutline.drawString(valueLabel, x, GAUGE_RADIUS - 20);
+        gaugeOutline.unloadFont();
 
-        gaugeOutline.setTextSize(GAUGE_UNITS_SIZE);
+        gaugeOutline.setFreeFont(FONT_NORMAL_8);
         textWidth = gaugeOutline.textWidth(valueUnits);
         x = (GAUGE_WIDTH - textWidth) / 2;
         gaugeOutline.drawString(valueUnits, x, GAUGE_RADIUS + 20);
+        gaugeOutline.unloadFont();
     }
 
     void createNeedle() {
@@ -196,9 +197,8 @@ private:
             return;
         }
         gaugeValue.fillSprite(VALUE_BG_COLOR);
-        gaugeValue.setTextFont(1);
+        gaugeValue.setFreeFont(FONT_BOLD_18);
         gaugeValue.setTextColor(valueColor);
-        gaugeValue.setTextSize(VALUE_FONT_SIZE);
     }
 
     void createEraser() {
@@ -220,6 +220,9 @@ private:
 
     void plotValue(double val) {
         gaugeValue.fillSprite(VALUE_BG_COLOR);
+        gaugeValue.setFreeFont(FONT_BOLD_18);
+        gaugeValue.setTextColor(valueColor, DISPLAY_BG_COLOR);
+
         if (valueType == "int") {
             int intVal = (int)round(val);
             int textWidth = gaugeValue.textWidth(String(intVal));
@@ -231,6 +234,7 @@ private:
             gaugeValue.drawFloat(val, 1, x, 0);
         }
         gaugeValue.pushSprite(VALUE_X, VALUE_Y);
+        gaugeValue.unloadFont();
     }
 
     double calculateAngle(double value) {

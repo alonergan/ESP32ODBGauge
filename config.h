@@ -1,6 +1,11 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+//#include "Audi_Font_20.h"
+//#include "Audi_Font_30.h"
+//#include "Audi_Font_Bold_20.h"
+//#include "Audi_Font_Bold_30.h"
+
 /*
   Hardware config
 */
@@ -23,6 +28,17 @@
 #define DISPLAY_CENTER_Y DISPLAY_HEIGHT / 2
 #define DISPLAY_BG_COLOR TFT_BLACK
 #define TFT_TRANSPARENT TFT_BLACK
+#define FONT_NORMAL_8 &AudiType_Normal_038pt7b
+#define FONT_NORMAL_12 &AudiType_Normal_0312pt7b
+#define FONT_NORMAL_14 &AudiType_Normal_0314pt7b
+#define FONT_NORMAL_16 &AudiType_Normal_0316pt7b
+#define FONT_NORMAL_18 &AudiType_Normal_0318pt7b
+#define FONT_BOLD_8 &AudiType_Bold_038pt7b
+#define FONT_BOLD_12 &AudiType_Bold_0312pt7b
+#define FONT_BOLD_14 &AudiType_Bold_0314pt7b
+#define FONT_BOLD_16 &AudiType_Bold_0316pt7b
+#define FONT_BOLD_18 &AudiType_Bold_0318pt7b
+
 
 /*
   Gauge params
@@ -57,7 +73,7 @@
 #define VALUE_Y 180
 #define VALUE_BG_COLOR DISPLAY_BG_COLOR
 #define VALUE_TEXT_COLOR TFT_WHITE
-#define VALUE_FONT_SIZE 4
+#define VALUE_FONT_SIZE 1
 
 /*
   GMeter Params

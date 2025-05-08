@@ -231,20 +231,20 @@ private:
         screenSprite.setTextSize(1);
         screenSprite.setTextColor(TFT_WHITE);
 
-        // Draw 2x2 grid of buttons
+        // Draw 2x3 grid of buttons
         const char* labels[2][3] = {
             {"RPM", "Boost", "Torque"},
-            {"GMeter", "Acceleration Meter", "Exit"}
+            {"G Meter", "60 Timer", "Exit"}
         };
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 2; j++) {
-                int x = BUTTON_MARGIN + j * (BUTTON_WIDTH + BUTTON_SPACING);
-                int y = BUTTON_MARGIN + i * (BUTTON_HEIGHT + BUTTON_SPACING);
-                screenSprite.fillRect(x, y, BUTTON_WIDTH, BUTTON_HEIGHT, TFT_DARKGREY);
-                screenSprite.drawRect(x, y, BUTTON_WIDTH, BUTTON_HEIGHT, TFT_WHITE);
+        for (int i = 0; i < 2; i++) {
+            for (int j = 0; j < 3; j++) {
+                int x = 20 + j * (80 + BUTTON_SPACING);
+                int y = 20 + i * (90 + BUTTON_SPACING);
+                screenSprite.fillRect(x, y, 80, 90, TFT_DARKGREY);
+                screenSprite.drawRect(x, y, 80, 90, TFT_WHITE);
                 int textWidth = screenSprite.textWidth(labels[i][j]);
                 int textHeight = screenSprite.fontHeight();
-                screenSprite.setCursor(x + (BUTTON_WIDTH - textWidth) / 2, y + (BUTTON_HEIGHT - textHeight) / 2);
+                screenSprite.setCursor(x + (80 - textWidth) / 2, y + (90 - textHeight) / 2);
                 screenSprite.print(labels[i][j]);
             }
         }

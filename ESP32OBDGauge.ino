@@ -1,5 +1,4 @@
 #include <TFT_eSPI.h>
-#include <TJpg_Decoder.h>
 #include "touch.h"
 #include "bluetooth.h"
 #include "commands.h"
@@ -8,7 +7,6 @@
 #include "acceleration_meter.h"
 #include "options_screen.h"
 #include "config.h"
-#include "s4_logo.h"
 
 bool TESTMODE = true;
 
@@ -32,6 +30,8 @@ void setup() {
     if (!TESTMODE) {
       obdConnected = connectToOBD();
     } else {
+      display.setCursor(0, 0);
+      display.println("TEST MODE");
       obdConnected = true;
     }
 
@@ -61,12 +61,6 @@ void setup() {
         &dataTaskHandle,
         0
     );
-}
-
-bool display_image(int16_t x, int16_t y, uint16_t w, uint16_t h, uint16_t* bitmap) {
-    if ( y >= display.height() ) return 0;
-    display.pushImage(x, y, w, h, bitmap);
-    return 1;
 }
 
 void dataFetchingTask(void* parameter) {
@@ -129,35 +123,62 @@ void dataFetchingTask(void* parameter) {
 
 void loop() {
     static bool wasTouched = false;
+    static bool ignoreHeldTouchInOptions = false;
+    static bool waitingForReleaseAfterOptions = false;
+    static bool justExitedOptions = false;
     static unsigned long touchStartTime = 0;
     const unsigned long LONG_PRESS_THRESHOLD = 1000; // 1 second
-    const unsigned long DEBOUNCE_MS = 75; // Debounce period
+    const unsigned long DEBOUNCE_MS = 200;
 
-    // Handle touch input
     if (touch_touched()) {
         if (millis() - lastTouchTime > DEBOUNCE_MS) {
             lastTouchTime = millis();
             if (!wasTouched) {
                 wasTouched = true;
                 touchStartTime = millis();
+
+                if (inOptionsScreen && !waitingForReleaseAfterOptions) {
+                    ignoreHeldTouchInOptions = false;
+                }
             }
+
             if (inOptionsScreen) {
-                // Process touch immediately in options screen
-                if (touch_last_x >= 0 && touch_last_y >= 0) {
-                    Serial.print("Touch at: "); Serial.print(touch_last_x); Serial.print(", "); Serial.println(touch_last_y);
-                    if (!optionsScreen->handleTouch(touch_last_x, touch_last_y)) {
-                        exitOptions();
+                if (!ignoreHeldTouchInOptions) {
+                    if (touch_last_x >= 0 && touch_last_y >= 0) {
+                        if (!optionsScreen->handleTouch(touch_last_x, touch_last_y)) {
+                            exitOptions();
+                            justExitedOptions = true;
+                        }
                     }
                 }
             } else if (millis() - touchStartTime > LONG_PRESS_THRESHOLD) {
                 showOptions();
-                wasTouched = false;
+                ignoreHeldTouchInOptions = true;
+                waitingForReleaseAfterOptions = true;
+                wasTouched = true;  // Don't reset — finger still down
             }
         }
     } else if (wasTouched && !touch_touched()) {
         wasTouched = false;
+
+        if (waitingForReleaseAfterOptions) {
+            // Now we can allow interaction again
+            waitingForReleaseAfterOptions = false;
+            ignoreHeldTouchInOptions = false;
+        }
+
+        if (justExitedOptions) {
+            justExitedOptions = false;
+            return;
+        }
+
         if (!inOptionsScreen && millis() - touchStartTime < LONG_PRESS_THRESHOLD) {
-            switchToNextGauge();
+            if ((touch_last_x >= 0 && touch_last_x < 30) &&
+                (touch_last_y > 210 && touch_last_y <= 240)) {
+                resetGauge();
+            } else {
+                switchToNextGauge();
+            }
         }
     }
 
@@ -180,6 +201,12 @@ void switchToNextGauge() {
         currentGauge = 3; // Stay on GMeter if OBD not connected
     }
     gauges[currentGauge]->initialize();
+    xSemaphoreGive(gaugeMutex);
+}
+
+void resetGauge() {
+    xSemaphoreTake(gaugeMutex, portMAX_DELAY);
+    gauges[currentGauge]->reset();
     xSemaphoreGive(gaugeMutex);
 }
 

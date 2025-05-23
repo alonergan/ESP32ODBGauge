@@ -19,6 +19,7 @@ public:
     virtual void initialize() = 0;
     virtual void displayStats(float fps, double frameAvg, double queryAvg) = 0;
     virtual GaugeType getType() const = 0;
+    virtual void reset() = 0;
 
 protected:
     TFT_eSPI* display;

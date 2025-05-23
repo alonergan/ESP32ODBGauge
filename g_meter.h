@@ -74,6 +74,11 @@ public:
         double gForceX = latestAccel.acceleration.y / 9.80665;
         double gForceY = latestAccel.acceleration.x / 9.80665;
 
+        // Check for bogus values (sometimes seen on startup)
+        if (gForceX < -3 || gForceX > 3 || gForceY < -3 || gForceY > 3) {
+            return;
+        }
+
         int gaugeCenterX = DISPLAY_CENTER_X;
         int gaugeCenterY = DISPLAY_CENTER_Y;
         int posX = gaugeCenterX - (GMETER_RADIUS * gForceX / 2);
@@ -90,6 +95,17 @@ public:
         }
 
         updateMinMaxValues(gForceX, gForceY);
+    }
+
+    void reset() {
+        display->fillScreen(TFT_BLACK);
+        minX.deleteSprite();
+        maxX.deleteSprite();
+        minY.deleteSprite();
+        maxY.deleteSprite();
+        combined.deleteSprite();
+        history.deleteSprite();
+        initialize();
     }
 
     void displayStats(float fps, double frameAvg, double queryAvg) override {
@@ -124,13 +140,16 @@ private:
     }
 
     void createTextSprite(TFT_eSprite& sprite, const char* text) {
+        //Serial.printf("Creating sprite with address: %p\n", sprite);
         sprite.setColorDepth(8);
         sprite.setTextFont(GMETER_TEXT_FONT);
         sprite.setTextSize(GMETER_TEXT_SIZE);
         sprite.setTextColor(GMETER_TEXT_COLOR, TFT_TRANSPARENT);
         int textWidth = sprite.textWidth("0.00");
         int textHeight = sprite.fontHeight();
-        sprite.createSprite(textWidth + 10, textHeight + 10);
+        if (!sprite.createSprite(textWidth + 10, textHeight + 10)) {
+            Serial.println("FAILED TO CREATE TEXT SPRITE");
+        }
         sprite.fillSprite(TFT_TRANSPARENT);
         sprite.setCursor((sprite.height() - textHeight) / 2, (sprite.width() - textWidth) / 2);
         sprite.println(text);
@@ -140,6 +159,7 @@ private:
         int spriteWidth = sprite.width();
         int spriteHeight = sprite.height();
         sprite.pushSprite(x - spriteWidth / 2, y - spriteHeight / 2);
+        Serial.printf("Pushed centered sprite at x: %.1d, y: %.1d\n", x, y);
     }
 
     void updateMinMaxValues(double gForceX, double gForceY) {
@@ -147,21 +167,25 @@ private:
         int outlineY = DISPLAY_CENTER_Y - GMETER_RADIUS;
 
         if (gForceX > maxValueX) {
+            Serial.println("Updating maxValueX with value: " + String(gForceX));
             maxValueX = gForceX;
             updateTextSprite(maxX, String(maxValueX, 2));
             pushCenteredSprite(maxX, outlineX - GMETER_TEXT_OFFSET_X, DISPLAY_CENTER_Y);
         }
         if (gForceX < minValueX) {
+            Serial.println("Updating minValueX with value " + String(gForceX));
             minValueX = gForceX;
             updateTextSprite(minX, String(abs(minValueX), 2));
             pushCenteredSprite(minX, outlineX + GMETER_WIDTH + GMETER_TEXT_OFFSET_X, DISPLAY_CENTER_Y);
         }
         if (gForceY > maxValueY) {
+            Serial.println("Updating maxValueY with value " + String(gForceY));
             maxValueY = gForceY;
             updateTextSprite(maxY, String(maxValueY, 2));
             pushCenteredSprite(maxY, DISPLAY_CENTER_X, outlineY - GMETER_TEXT_OFFSET_Y);
         }
         if (gForceY < minValueY) {
+            Serial.println("Updating minValueY with value " + String(gForceY));
             minValueY = gForceY;
             updateTextSprite(minY, String(abs(minValueY), 2));
             pushCenteredSprite(minY, DISPLAY_CENTER_X, outlineY + GMETER_HEIGHT + GMETER_TEXT_OFFSET_Y);
@@ -169,11 +193,13 @@ private:
     }
 
     void updateTextSprite(TFT_eSprite& sprite, String text) {
+        //Serial.printf("Updating text sprite at address: %p\n", sprite);
         sprite.fillSprite(TFT_TRANSPARENT);
         int textWidth = sprite.textWidth(text);
         int textHeight = sprite.fontHeight();
         sprite.setCursor((sprite.height() - textHeight) / 2, (sprite.width() - textWidth) / 2);
         sprite.println(text);
+        Serial.println("Sprite updated with text " + text);
     }
 };
 

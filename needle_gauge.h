@@ -35,7 +35,7 @@ public:
         createValue();
         createEraser();
         gaugeOutline.pushSprite(DISPLAY_CENTER_X - GAUGE_RADIUS, 0);
-        plotNeedle(currentAngle);
+        plotNeedle(-120);
         plotValue(0.0);
 
         if (!stats.createSprite(40, 120)) {
@@ -117,6 +117,15 @@ public:
             }
             plotValue(targetValue);
         }
+    }
+
+    void reset() {
+        display->fillScreen(DISPLAY_BG_COLOR);
+        gaugeOutline.deleteSprite();
+        gaugeValue.deleteSprite();
+        gaugeNeedle.deleteSprite();
+        gaugeEraser.deleteSprite();
+        initialize();
     }
 
     void displayStats(float fps, double frameAvg, double queryAvg) {

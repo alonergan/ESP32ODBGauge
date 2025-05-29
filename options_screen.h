@@ -32,8 +32,8 @@ public:
                     int by = BUTTON_MARGIN + i * (BUTTON_HEIGHT + BUTTON_SPACING);
                     if (x >= bx && x < bx + BUTTON_WIDTH && y >= by && y < by + BUTTON_HEIGHT) {
                         if (i == 0 && j == 0) { // Gauge settings
-                            state = GAUGES;
-                            drawGaugesMenu();
+                            state = ABOUT;
+                            drawAboutMenu();
                             return true;
                         } else if (i == 0 && j == 1) { // Bluetooth settings
                             state = BLUETOOTH;
@@ -49,8 +49,8 @@ public:
                     }
                 }
             }
-        } else if (state == GAUGES) {
-            return handleGaugesTouch(x, y);
+        } else if (state == ABOUT) {
+            return handleAboutTouch(x, y);
         } else if (state == BLUETOOTH) {
             return handleBluetoothTouch(x, y);
         } else if (state == COLOR) {
@@ -65,7 +65,7 @@ private:
     int numGauges;
     TFT_eSprite screenSprite;
     
-    enum ScreenState { MAIN_MENU, GAUGES, BLUETOOTH, COLOR };
+    enum ScreenState { MAIN_MENU, ABOUT, BLUETOOTH, COLOR };
     enum BluetoothState { MAIN_BLUETOOTH_MENU, PAIRING_MENU, STATS_MENU };
     enum ColorState { MAIN_COLOR_MENU, NEEDLE_COLOR, OUTLINE_COLOR, VALUE_COLOR };
     ScreenState state;
@@ -86,31 +86,10 @@ private:
         TFT_VIOLET, TFT_PURPLE, TFT_SILVER, TFT_WHITE
     };
 
-    bool handleGaugesTouch(uint16_t x, uint16_t y) {
-        // Check main menu buttons
-        for (int i = 0; i < 2; i++) {
-            for (int j = 0; j < 3; j++) {
-                int bx = BUTTON_MARGIN + j * (BUTTON_WIDTH + BUTTON_SPACING);
-                int by = BUTTON_MARGIN + i * (BUTTON_HEIGHT + BUTTON_SPACING);
-                if (x >= bx && x < bx + BUTTON_WIDTH && y >= by && y < by + BUTTON_HEIGHT) {
-                    if (i == 0 && j == 0) { // RPM
-                        // Todo for now. Not sure how this should be handled
-                    } else if (i == 0 && j == 1) { // Boost
-
-                    } else if (i == 0 && j == 2) { // Torque
-                        
-                    } else if (i == 1 && j == 0) { // GMeter
-                        
-                    } else if (i == 1 && j == 1) { // Accel. Meter
-                        
-                    } else if (i == 1 && j == 2) { // Exit
-                        state = MAIN_MENU;
-                        drawMainMenu();
-                        return false;
-                    }
-                }
-            }
-        }
+    bool handleAboutTouch(uint16_t x, uint16_t y) {
+        // Exit about screen on any touch
+        state = MAIN_MENU;
+        drawMainMenu();
         return true;
     }
 
@@ -137,7 +116,7 @@ private:
                         } else if (i == 1 && j == 1) { // Exit
                             colorState = MAIN_COLOR_MENU;
                             drawMainMenu();
-                            return false;
+                            return true;
                         }
                     }
                 }
@@ -192,7 +171,7 @@ private:
                     } else if (i == 1 && j == 1) { // Exit
                         state = MAIN_MENU;
                         drawMainMenu();
-                        return false;
+                        return true;
                     }
                 }
             }
@@ -207,7 +186,7 @@ private:
 
         // Draw 2x2 grid of buttons
         const char* labels[2][2] = {
-            {"Gauges", "Bluetooth"},
+            {"About", "Bluetooth"},
             {"Color", "Exit"}
         };
         for (int i = 0; i < 2; i++) {
@@ -225,29 +204,31 @@ private:
         screenSprite.pushSprite(0, 0);
     }
 
-    void drawGaugesMenu() {
+    void drawAboutMenu() {
         screenSprite.fillSprite(TFT_BLACK);
         screenSprite.setTextFont(2);
-        screenSprite.setTextSize(1);
+        screenSprite.setTextSize(2);
         screenSprite.setTextColor(TFT_WHITE);
 
-        // Draw 2x3 grid of buttons
-        const char* labels[2][3] = {
-            {"RPM", "Boost", "Torque"},
-            {"G Meter", "60 Timer", "Exit"}
-        };
-        for (int i = 0; i < 2; i++) {
-            for (int j = 0; j < 3; j++) {
-                int x = 20 + j * (80 + BUTTON_SPACING);
-                int y = 20 + i * (90 + BUTTON_SPACING);
-                screenSprite.fillRect(x, y, 80, 90, TFT_DARKGREY);
-                screenSprite.drawRect(x, y, 80, 90, TFT_WHITE);
-                int textWidth = screenSprite.textWidth(labels[i][j]);
-                int textHeight = screenSprite.fontHeight();
-                screenSprite.setCursor(x + (80 - textWidth) / 2, y + (90 - textHeight) / 2);
-                screenSprite.print(labels[i][j]);
-            }
-        }
+        String title = "About";
+        int titleWidth = screenSprite.textWidth(title);
+        int x = DISPLAY_CENTER_X - (titleWidth / 2);
+        screenSprite.setCursor(x, 30);
+        screenSprite.print(title);
+
+        screenSprite.setTextSize(1);
+        String version = "Version: " + String(SOFTWARE_VERSION);
+        int versionWidth = screenSprite.textWidth(version);
+        x = DISPLAY_CENTER_X - (versionWidth / 2);
+        screenSprite.setCursor(x, 60);
+        screenSprite.print(version);
+
+        String device = "Device: " + String(DEVICE_DESCRIPTION);
+        int deviceWidth = screenSprite.textWidth(device);
+        x = DISPLAY_CENTER_X - (deviceWidth / 2);
+        screenSprite.setCursor(x, 90);
+        screenSprite.print(device);
+
         screenSprite.pushSprite(0, 0);
     }
 
@@ -344,10 +325,6 @@ private:
                 static_cast<NeedleGauge*>(gauges[i])->setValueColor(color);
             }
         }
-    }
-
-    void updateGauge() {
-
     }
 };
 

@@ -8,7 +8,7 @@
 #include "options_screen.h"
 #include "config.h"
 
-bool TESTMODE = true;
+bool TESTMODE = false;
 
 TFT_eSPI display = TFT_eSPI();
 Gauge* gauges[5];
@@ -28,10 +28,14 @@ void setup() {
 
     // Attempt OBD connection
     if (!TESTMODE) {
+      display.fillScreen(TFT_BLACK);
+      display.setCursor(50, 50);
+      display.setTextFont(1);
+      display.setTextSize(1);
+      display.setTextColor(TFT_WHITE);
+      display.println("Connecting to OBD...");
       obdConnected = connectToOBD();
     } else {
-      display.setCursor(0, 0);
-      display.println("TEST MODE");
       obdConnected = true;
     }
 
@@ -187,6 +191,12 @@ void loop() {
         xSemaphoreTake(gaugeMutex, portMAX_DELAY);
         gauges[currentGauge]->render(0.0);
         xSemaphoreGive(gaugeMutex);
+        if (obdConnected) {
+            display.drawRect(0, 0, 10, 10, TFT_GREEN);
+        }
+        else {
+            display.drawRect(0, 0, 10, 10, TFT_RED);
+        }
     }
 
     // Limit to ~100 FPS

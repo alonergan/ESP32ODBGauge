@@ -1,10 +1,11 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-//#include "Audi_Font_20.h"
-//#include "Audi_Font_30.h"
-//#include "Audi_Font_Bold_20.h"
-//#include "Audi_Font_Bold_30.h"
+/*
+  Versioning and other descriptors
+*/
+#define SOFTWARE_VERSION "0.1"
+#define DEVICE_DESCRIPTION "ESP32 DevKitC-V1"
 
 /*
   Hardware config

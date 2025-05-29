@@ -28,15 +28,18 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
 
 void intializeELM327() {
     // Send initialization commands to ELM327
-    commands.sendCommand("AT D");     // Reset to default
-    commands.sendCommand("AT Z");     // Reset adapter
-    commands.sendCommand("AT E0");    // Echo off
-    commands.sendCommand("AT L0");    // Linefeeds off
-    commands.sendCommand("AT S0");    // Spaces off
-    commands.sendCommand("AT H0");    // Headers off
-    commands.sendCommand("AT SP 0");  // Set auto protocol
-    commands.sendCommand("AT ST 10"); // Set optimal timeout to 160ms
-    commands.sendCommand("AT AT 2");  // Set aggressive adaptive timing
+    //commands.sendCommand("ATD");     // Reset to default
+    commands.sendCommand("ATZ");     // Reset adapter
+    commands.sendCommand("ATE0");    // Echo off
+    //commands.sendCommand("ATL0");    // Linefeeds off
+    //commands.sendCommand("ATS0");    // Spaces off
+    //commands.sendCommand("ATH0");    // Headers off
+    commands.sendCommand("ATSP 6");  // Set protocol
+    commands.sendCommand("ATSH 7DF"); // Set ECU address
+    //commands.sendCommand("AT ST 10"); // Set optimal timeout to 160ms
+    //commands.sendCommand("AT AT 2");  // Set aggressive adaptive timing
+    String pidSupport = commands.sendCommand("0100"); // Check supported PIDs
+    Serial.println("PID 0100 response: " + pidSupport);
 }
 
 bool connectToOBD() {

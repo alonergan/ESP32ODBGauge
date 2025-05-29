@@ -2,12 +2,12 @@
 
 // Define the static commandConfig array
 const String Commands::commandConfig[6][8] = {
-    {"RPM", "rpm", "010C", "0", "0", "7000", "2", "0"},
-    {"Engine Load", "%", "0104", "1", "0", "100", "1", "0"},
-    {"Barometric Pressure", "psi", "0133", "2", "0", "37", "1", "14.7"},
-    {"Reference Torque", "lbft", "0163", "3", "0", "500", "2", "445"},
-    {"Actual Torque", "%", "0162", "4", "-125", "125", "1", "0"},
-    {"Speed", "mph", "010D", "5", "0", "158", "1", "0"}
+    {"RPM", "rpm", "01 0C", "0", "0", "7000", "2", "0"},
+    {"Engine Load", "%", "01 04", "1", "0", "100", "1", "0"},
+    {"Barometric Pressure", "psi", "01 33", "2", "0", "37", "1", "14.7"},
+    {"Reference Torque", "lbft", "01 63", "3", "0", "500", "2", "445"},
+    {"Actual Torque", "%", "01 62", "4", "-125", "125", "1", "0"},
+    {"Speed", "mph", "01 0D", "5", "0", "158", "1", "0"}
 };
 
 // Constructor initializes A and B

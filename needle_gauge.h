@@ -52,6 +52,7 @@ public:
     }
 
     void setReading(double reading) {
+        Serial.println("Setting reading to: " + String(reading));
         targetValue = constrain(reading, minValue, maxValue);
     }
 

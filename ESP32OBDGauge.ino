@@ -46,13 +46,14 @@ void setup() {
     gauges[0] = new NeedleGauge(&display, 0); // RPM
     gauges[1] = new NeedleGauge(&display, 1); // Boost
     gauges[2] = new NeedleGauge(&display, 2); // Torque
-    gauges[3] = new GMeter(&display);
-    gauges[4] = new AccelerationMeter(&display);
+    gauges[3] = new NeedleGauge(&display, 3); // Horsepower
+    gauges[4] = new GMeter(&display);
+    gauges[5] = new AccelerationMeter(&display);
 
     // Initialize first gauge (RPM or GMeter if no OBD)
-    gauges[obdConnected ? 0 : 3]->initialize();
+    gauges[obdConnected ? 0 : 4]->initialize();
     if (!obdConnected) {
-        currentGauge = 3; // Default to GMeter if OBD fails
+        currentGauge = 4; // Default to GMeter if OBD fails
     }
 
     // Start data fetching task on core 0
@@ -206,7 +207,7 @@ void loop() {
 void switchToNextGauge() {
     xSemaphoreTake(gaugeMutex, portMAX_DELAY);
     if (obdConnected) {
-        currentGauge = (currentGauge + 1) % 5;
+        currentGauge = (currentGauge + 1) % 6;
     } else {
         currentGauge = 3; // Stay on GMeter if OBD not connected
     }

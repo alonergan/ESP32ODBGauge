@@ -28,12 +28,11 @@ static void notifyCallback(BLERemoteCharacteristic* pBLERemoteCharacteristic, ui
 
 void intializeELM327() {
     // Send initialization commands to ELM327
-    //commands.sendCommand("ATD");     // Reset to default
     commands.sendCommand("ATZ");     // Reset adapter
     commands.sendCommand("ATE0");    // Echo off
     commands.sendCommand("ATL0");    // Linefeeds off
     commands.sendCommand("ATS0");    // Spaces off
-    //commands.sendCommand("ATH0");    // Headers off
+    commands.sendCommand("ATH0");    // Headers off
     commands.sendCommand("ATSP 6");  // Set protocol
     commands.sendCommand("ATSH 7DF"); // Set ECU address
     commands.sendCommand("AT ST 10"); // Set optimal timeout to 160ms

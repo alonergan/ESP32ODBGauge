@@ -175,7 +175,12 @@ private:
         gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS - GAUGE_LINE_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, outlineColor, GAUGE_BG_COLOR, true);
         gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS - GAUGE_LINE_WIDTH - GAUGE_ARC_WIDTH, GAUGE_RADIUS - (GAUGE_LINE_WIDTH * 2) - GAUGE_ARC_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, outlineColor, GAUGE_BG_COLOR, true);
 
-        gaugeOutline.setFreeFont(FONT_BOLD_14);
+        if (valueLabel == "HORSEPOWER") {
+            // This is a large label, need to decrease font size
+            gaugeOutline.setFreeFont(FONT_BOLD_8);
+        } else {
+            gaugeOutline.setFreeFont(FONT_BOLD_14);
+        }
         gaugeOutline.setTextColor(outlineColor);
         int textWidth = gaugeOutline.textWidth(valueLabel);
         int x = (GAUGE_WIDTH - textWidth) / 2;

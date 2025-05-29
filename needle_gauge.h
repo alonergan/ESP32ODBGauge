@@ -110,7 +110,7 @@ public:
             plotValue(sweepValue);
         } else {
             double targetAngle = calculateAngle(targetValue);
-            currentAngle += 0.3 * (targetAngle - currentAngle); // Smoothing factor
+            currentAngle += 0.20 * (targetAngle - currentAngle); // Smoothing factor
             if (abs(currentAngle - oldAngle) > 1) {
                 gaugeEraser.pushRotated(oldAngle);
                 plotNeedle(currentAngle);

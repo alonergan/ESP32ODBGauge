@@ -156,7 +156,7 @@ private:
     int16_t oldAngle;
     double minValue, maxValue;
     String valueLabel, valueUnits, valueType;
-    uint16_t needleColor, outlineColor, valueColor; // Runtime needle color
+    uint16_t needleColor, outlineColor, valueColor;
 
     // Sweep state
     enum SweepState { SWEEP_UP, SWEEP_DOWN, SWEEP_COMPLETE };
@@ -175,12 +175,8 @@ private:
         gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS - GAUGE_LINE_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, outlineColor, GAUGE_BG_COLOR, true);
         gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS - GAUGE_LINE_WIDTH - GAUGE_ARC_WIDTH, GAUGE_RADIUS - (GAUGE_LINE_WIDTH * 2) - GAUGE_ARC_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, outlineColor, GAUGE_BG_COLOR, true);
 
-        if (valueLabel == "HORSEPOWER") {
-            // This is a large label, need to decrease font size
-            gaugeOutline.setFreeFont(FONT_BOLD_8);
-        } else {
-            gaugeOutline.setFreeFont(FONT_BOLD_14);
-        }
+
+        gaugeOutline.setFreeFont(FONT_BOLD_14);
         gaugeOutline.setTextColor(outlineColor);
         int textWidth = gaugeOutline.textWidth(valueLabel);
         int x = (GAUGE_WIDTH - textWidth) / 2;
@@ -262,7 +258,7 @@ String NeedleGauge::gaugeTypes[4][5] = {
     {"RPM", "", "0", "7000", "int"},
     {"BOOST", "psi", "0.0", "22.0", "double"},
     {"TORQUE", "lb-ft", "0", "445", "int"},
-    {"HORSEPOWER", "hp", "0", "450", "int"}
+    {"HP", "", "0", "450", "int"}
 };
 
 #endif

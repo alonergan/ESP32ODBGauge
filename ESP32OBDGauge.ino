@@ -8,7 +8,7 @@
 #include "options_screen.h"
 #include "config.h"
 
-bool TESTMODE = false;
+bool TESTMODE = true;
 
 TFT_eSPI display = TFT_eSPI();
 Gauge* gauges[5];
@@ -23,17 +23,20 @@ bool inOptionsScreen = false;
 void setup() {
     Serial.begin(115200);
     display.begin();
-    display.setRotation(1); // Adjust as needed
+    display.setRotation(1);
     touch_init(DISPLAY_WIDTH, DISPLAY_HEIGHT, display.getRotation());
+
+    // Show splash screen for 1.25 seconds
+    int x = 320 / 5;
+    int r = 40;
+    display.fillScreen(TFT_BLACK);
+    for (int i = 1; i < 5; i++) {
+        display.drawSmoothCircle((i * x), DISPLAY_CENTER_Y, r, TFT_WHITE, TFT_BLACK);
+    }
+    delay(10000);
 
     // Attempt OBD connection
     if (!TESTMODE) {
-      display.fillScreen(TFT_BLACK);
-      display.setCursor(50, 50);
-      display.setTextFont(1);
-      display.setTextSize(1);
-      display.setTextColor(TFT_WHITE);
-      display.println("Connecting to OBD...");
       obdConnected = connectToOBD();
     } else {
       obdConnected = true;
@@ -46,14 +49,13 @@ void setup() {
     gauges[0] = new NeedleGauge(&display, 0); // RPM
     gauges[1] = new NeedleGauge(&display, 1); // Boost
     gauges[2] = new NeedleGauge(&display, 2); // Torque
-    gauges[3] = new NeedleGauge(&display, 3); // Horsepower
     gauges[4] = new GMeter(&display);
     gauges[5] = new AccelerationMeter(&display);
 
     // Initialize first gauge (RPM or GMeter if no OBD)
-    gauges[obdConnected ? 0 : 4]->initialize();
+    gauges[obdConnected ? 0 : 3]->initialize();
     if (!obdConnected) {
-        currentGauge = 4; // Default to GMeter if OBD fails
+        currentGauge = 3; // Default to GMeter if OBD fails
     }
 
     // Start data fetching task on core 0

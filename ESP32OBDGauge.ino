@@ -3,6 +3,7 @@
 #include "bluetooth.h"
 #include "commands.h"
 #include "needle_gauge.h"
+#include "dual_gauge.h"
 #include "g_meter.h"
 #include "acceleration_meter.h"
 #include "options_screen.h"
@@ -11,7 +12,7 @@
 bool TESTMODE = true;
 
 TFT_eSPI display = TFT_eSPI();
-Gauge* gauges[6];
+Gauge* gauges[7];
 int currentGauge = 0;
 TaskHandle_t dataTaskHandle;
 SemaphoreHandle_t gaugeMutex;
@@ -49,8 +50,9 @@ void setup() {
     gauges[1] = new NeedleGauge(&display, 1); // Boost  (Approximate)
     gauges[2] = new NeedleGauge(&display, 2); // Torque (Approximate)
     gauges[3] = new NeedleGauge(&display, 3); // Horsepower (Approximate)
-    gauges[4] = new GMeter(&display);
-    gauges[5] = new AccelerationMeter(&display);
+    gauges[4] = new DualGauge(&display, 0);
+    gauges[5] = new GMeter(&display);
+    gauges[6] = new AccelerationMeter(&display);
 
     gauges[obdConnected ? 0 : 4]->initialize();
     if (!obdConnected) {
@@ -200,7 +202,7 @@ void loop() {
 void switchToNextGauge() {
     xSemaphoreTake(gaugeMutex, portMAX_DELAY);
     if (obdConnected) {
-        currentGauge = (currentGauge + 1) % 6;
+        currentGauge = (currentGauge + 1) % 7;
     } else {
         currentGauge = 4; // Stay on GMeter if OBD not connected
     }

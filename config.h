@@ -77,6 +77,16 @@
 #define VALUE_FONT_SIZE 1
 
 /*
+  Dual Gauge Params
+*/
+#define DG_BAR_WIDTH 60
+#define DG_BAR_HEIGHT 180
+#define DG_BAR_LINE_WIDTH 2
+#define DG_LABEL_SIZE 2
+#define DG_UNITS_SIZE 1
+#define DG_VALUE_SIZE 3
+
+/*
   GMeter Params
 */
 #define GMETER_RADIUS 90  

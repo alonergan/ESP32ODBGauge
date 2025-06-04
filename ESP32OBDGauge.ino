@@ -11,7 +11,7 @@
 bool TESTMODE = true;
 
 TFT_eSPI display = TFT_eSPI();
-Gauge* gauges[5];
+Gauge* gauges[6];
 int currentGauge = 0;
 TaskHandle_t dataTaskHandle;
 SemaphoreHandle_t gaugeMutex;
@@ -22,15 +22,8 @@ bool inOptionsScreen = false;
 
 void setup() {
     Serial.begin(115200);
-    Serial.printf("Free heap before display init: %d\n", ESP.getFreeHeap());
     display.begin();
-    if (!display.width() || !display.height()) {
-        Serial.println("ERROR: Display initialization failed!");
-    } else {
-        Serial.println("Display initialized successfully");
-    }
     display.setRotation(1);
-    Serial.printf("Free heap after display init: %d\n", ESP.getFreeHeap());
     touch_init(DISPLAY_WIDTH, DISPLAY_HEIGHT, display.getRotation());
 
     // Show splash screen
@@ -52,15 +45,16 @@ void setup() {
     }
 
     gaugeMutex = xSemaphoreCreateMutex();
-    gauges[0] = new NeedleGauge(&display, 0); // RPM
-    gauges[1] = new NeedleGauge(&display, 1); // Boost
-    gauges[2] = new NeedleGauge(&display, 2); // Torque
-    gauges[3] = new GMeter(&display);
-    gauges[4] = new AccelerationMeter(&display);
+    gauges[0] = new NeedleGauge(&display, 0); // RPM    (Actual)
+    gauges[1] = new NeedleGauge(&display, 1); // Boost  (Approximate)
+    gauges[2] = new NeedleGauge(&display, 2); // Torque (Approximate)
+    gauges[3] = new NeedleGauge(&display, 3); // Horsepower (Approximate)
+    gauges[4] = new GMeter(&display);
+    gauges[5] = new AccelerationMeter(&display);
 
-    gauges[obdConnected ? 0 : 3]->initialize();
+    gauges[obdConnected ? 0 : 4]->initialize();
     if (!obdConnected) {
-        currentGauge = 3;
+        currentGauge = 4;
     }
 
     xTaskCreatePinnedToCore(dataFetchingTask, "DataFetching", 10000, NULL, 1, &dataTaskHandle, 0);
@@ -206,9 +200,9 @@ void loop() {
 void switchToNextGauge() {
     xSemaphoreTake(gaugeMutex, portMAX_DELAY);
     if (obdConnected) {
-        currentGauge = (currentGauge + 1) % 5;
+        currentGauge = (currentGauge + 1) % 6;
     } else {
-        currentGauge = 3; // Stay on GMeter if OBD not connected
+        currentGauge = 4; // Stay on GMeter if OBD not connected
     }
     gauges[currentGauge]->initialize();
     xSemaphoreGive(gaugeMutex);

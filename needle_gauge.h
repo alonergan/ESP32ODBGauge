@@ -257,7 +257,7 @@ String NeedleGauge::gaugeTypes[4][5] = {
     {"RPM", "", "0", "7000", "int"},
     {"BOOST", "psi", "0.0", "22.0", "double"},
     {"TORQUE", "lb-ft", "0", "445", "int"},
-    {"HP", "", "0", "450", "int"}
+    {"POWER", "hp", "0", "450", "int"}
 };
 
 #endif

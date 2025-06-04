@@ -8,7 +8,7 @@
 #include "options_screen.h"
 #include "config.h"
 
-bool TESTMODE = false;
+bool TESTMODE = true;
 
 TFT_eSPI display = TFT_eSPI();
 Gauge* gauges[5];
@@ -22,49 +22,48 @@ bool inOptionsScreen = false;
 
 void setup() {
     Serial.begin(115200);
+    Serial.printf("Free heap before display init: %d\n", ESP.getFreeHeap());
     display.begin();
-    display.setRotation(1); // Adjust as needed
+    if (!display.width() || !display.height()) {
+        Serial.println("ERROR: Display initialization failed!");
+    } else {
+        Serial.println("Display initialized successfully");
+    }
+    display.setRotation(1);
+    Serial.printf("Free heap after display init: %d\n", ESP.getFreeHeap());
     touch_init(DISPLAY_WIDTH, DISPLAY_HEIGHT, display.getRotation());
 
-    // Attempt OBD connection
+    // Show splash screen
+    int r = 50;
+    display.fillScreen(TFT_BLACK);
+    display.drawSmoothArc(61, DISPLAY_CENTER_Y, r, r-10, 0, 360, TFT_WHITE, TFT_BLACK);
+    delay(250);
+    display.drawSmoothArc(127, DISPLAY_CENTER_Y, r, r-10, 0, 360, TFT_WHITE, TFT_BLACK);
+    delay(250);
+    display.drawSmoothArc(193, DISPLAY_CENTER_Y, r, r-10, 0, 360, TFT_WHITE, TFT_BLACK);
+    delay(250);
+    display.drawSmoothArc(259, DISPLAY_CENTER_Y, r, r-10, 0, 360, TFT_WHITE, TFT_BLACK);
+    delay(1000);
+
     if (!TESTMODE) {
-      display.fillScreen(TFT_BLACK);
-      display.setCursor(50, 50);
-      display.setTextFont(1);
-      display.setTextSize(1);
-      display.setTextColor(TFT_WHITE);
-      display.println("Connecting to OBD...");
-      obdConnected = connectToOBD();
+        obdConnected = connectToOBD();
     } else {
-      obdConnected = true;
+        obdConnected = true;
     }
 
-    // Initialize mutex
     gaugeMutex = xSemaphoreCreateMutex();
-
-    // Create all gauges
     gauges[0] = new NeedleGauge(&display, 0); // RPM
     gauges[1] = new NeedleGauge(&display, 1); // Boost
     gauges[2] = new NeedleGauge(&display, 2); // Torque
     gauges[3] = new GMeter(&display);
     gauges[4] = new AccelerationMeter(&display);
 
-    // Initialize first gauge (RPM or GMeter if no OBD)
     gauges[obdConnected ? 0 : 3]->initialize();
     if (!obdConnected) {
-        currentGauge = 3; // Default to GMeter if OBD fails
+        currentGauge = 3;
     }
 
-    // Start data fetching task on core 0
-    xTaskCreatePinnedToCore(
-        dataFetchingTask,
-        "DataFetching",
-        10000,
-        NULL,
-        1,
-        &dataTaskHandle,
-        0
-    );
+    xTaskCreatePinnedToCore(dataFetchingTask, "DataFetching", 10000, NULL, 1, &dataTaskHandle, 0);
 }
 
 void dataFetchingTask(void* parameter) {
@@ -152,6 +151,7 @@ void loop() {
                         if (!optionsScreen->handleTouch(touch_last_x, touch_last_y)) {
                             exitOptions();
                             justExitedOptions = true;
+                            Serial.println("Just exited options screen");
                         }
                     }
                 }

@@ -24,12 +24,14 @@ public:
     }
 
     bool handleTouch(uint16_t x, uint16_t y) {
+        Serial.println(String(state));
         if (state == MAIN_MENU) {
             // Check main menu buttons
             for (int i = 0; i < 2; i++) {
                 for (int j = 0; j < 2; j++) {
                     int bx = BUTTON_MARGIN + j * (BUTTON_WIDTH + BUTTON_SPACING);
                     int by = BUTTON_MARGIN + i * (BUTTON_HEIGHT + BUTTON_SPACING);
+                    Serial.printf("handleTouch() - x: %.1d, y: %.1d, bx: %.1d, by: %.1d\n", x, y, bx, by);
                     if (x >= bx && x < bx + BUTTON_WIDTH && y >= by && y < by + BUTTON_HEIGHT) {
                         if (i == 0 && j == 0) { // Gauge settings
                             state = ABOUT;
@@ -49,6 +51,7 @@ public:
                     }
                 }
             }
+            return true; // No button touched so dont process any input or change screens
         } else if (state == ABOUT) {
             return handleAboutTouch(x, y);
         } else if (state == BLUETOOTH) {
@@ -103,7 +106,7 @@ private:
                     if (x >= bx && x < bx + BUTTON_WIDTH && y >= by && y < by + BUTTON_HEIGHT) {
                         if (i == 0 && j == 0) { // Needle color
                             colorState = NEEDLE_COLOR;
-                            drawColorPicker();
+                            drawColorPicker();  
                             return true;
                         } else if (i == 0 && j == 1) { // Outline color
                             colorState = OUTLINE_COLOR;
@@ -115,12 +118,14 @@ private:
                             return true;
                         } else if (i == 1 && j == 1) { // Exit
                             colorState = MAIN_COLOR_MENU;
+                            state = MAIN_MENU;
                             drawMainMenu();
                             return true;
                         }
                     }
                 }
             }
+            return true; // No button touched so dont process any input or change screens
         } else {
             // Not in main menu, only one sub menu to set color, so check color swatches
             for (int i = 0; i < 3; i++) {
@@ -128,9 +133,8 @@ private:
                     int cx = BUTTON_MARGIN + j * (COLOR_SWATCH_SIZE + BUTTON_SPACING);
                     int cy = BUTTON_MARGIN + i * (COLOR_SWATCH_SIZE + BUTTON_SPACING);
                     if (x >= cx && x < cx + COLOR_SWATCH_SIZE && y >= cy && y < cy + COLOR_SWATCH_SIZE) {
-                        uint16_t color = colorOptions[i * 4 + j];
-
                         // Handle color update based on screen state
+                        uint16_t color = colorOptions[i * 4 + j];
                         switch (colorState) {
                             case NEEDLE_COLOR:
                                 updateNeedleColor(color);
@@ -152,6 +156,7 @@ private:
                     }
                 }
             }
+            return true; // No button touched so dont process any input or change screens
         }
     }
 
@@ -176,6 +181,7 @@ private:
                 }
             }
         }
+        return true; // No button touched so dont process any input or change screens
     }
 
     void drawMainMenu() {

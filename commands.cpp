@@ -138,6 +138,13 @@ double Commands::getReading(int selectedReading) {
             return (ref * (actual / 100.0));
         }
         case 3: {
+            // Horsepower
+            double rpm = query(0);
+            double refTorque = query(3);
+            double actualTorque = query(4);
+            return ((refTorque * (actualTorque / 100.0)) * rpm) / 5252.0;
+        }
+        case 5: {
             // Speed
             return query(5);
         }

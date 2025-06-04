@@ -2,6 +2,12 @@
 #define CONFIG_H
 
 /*
+  Versioning and other descriptors
+*/
+#define SOFTWARE_VERSION "0.1"
+#define DEVICE_DESCRIPTION "ESP32 DevKitC-V1"
+
+/*
   Hardware config
 */
 #define BUTTON_PIN 14
@@ -22,7 +28,18 @@
 #define DISPLAY_CENTER_X DISPLAY_WIDTH / 2
 #define DISPLAY_CENTER_Y DISPLAY_HEIGHT / 2
 #define DISPLAY_BG_COLOR TFT_BLACK
-#define TFT_TRANSPARENT TFT_BLACK  // Explicitly match background
+#define TFT_TRANSPARENT TFT_BLACK
+#define FONT_NORMAL_8 &AudiType_Normal_038pt7b
+#define FONT_NORMAL_12 &AudiType_Normal_0312pt7b
+#define FONT_NORMAL_14 &AudiType_Normal_0314pt7b
+#define FONT_NORMAL_16 &AudiType_Normal_0316pt7b
+#define FONT_NORMAL_18 &AudiType_Normal_0318pt7b
+#define FONT_BOLD_8 &AudiType_Bold_038pt7b
+#define FONT_BOLD_12 &AudiType_Bold_0312pt7b
+#define FONT_BOLD_14 &AudiType_Bold_0314pt7b
+#define FONT_BOLD_16 &AudiType_Bold_0316pt7b
+#define FONT_BOLD_18 &AudiType_Bold_0318pt7b
+
 
 /*
   Gauge params
@@ -57,7 +74,7 @@
 #define VALUE_Y 180
 #define VALUE_BG_COLOR DISPLAY_BG_COLOR
 #define VALUE_TEXT_COLOR TFT_WHITE
-#define VALUE_FONT_SIZE 4
+#define VALUE_FONT_SIZE 1
 
 /*
   GMeter Params
@@ -69,12 +86,22 @@
 #define GMETER_TEXT_SIZE 2
 #define GMETER_TEXT_FONT 1
 #define GMETER_TEXT_COLOR TFT_RED
-#define GMETER_TEXT_OFFSET_X 35  // Reduced for tighter placement
-#define GMETER_TEXT_OFFSET_Y 15  // Symmetric vertical offset
+#define GMETER_TEXT_OFFSET_X 35
+#define GMETER_TEXT_OFFSET_Y 15  
 #define GMETER_POINT_RADIUS 5
 #define GMETER_POINT_COLOR TFT_RED
 #define GMETER_OUTLINE_COLOR TFT_WHITE
+#define GMETER_LINE_SIZE 3
 #define GMETER_HISTORY_COLOR 0x9cf3
+
+/*
+  Acceleration Meter Params
+*/
+#define AMETER_SPEED_LABEL "Speed"
+#define AMETER_TIME_LABEL "Time"
+#define AMETER_TIME_COLOR TFT_RED
+#define AMETER_SPEED_COLOR TFT_RED
+#define AMETER_V_PADDING 10
 
 
 #endif // CONFIG_H

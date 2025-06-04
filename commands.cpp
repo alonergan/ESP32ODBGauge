@@ -1,12 +1,13 @@
 #include "commands.h"
 
 // Define the static commandConfig array
-const String Commands::commandConfig[5][8] = {
+const String Commands::commandConfig[6][8] = {
     {"RPM", "rpm", "010C", "0", "0", "7000", "2", "0"},
     {"Engine Load", "%", "0104", "1", "0", "100", "1", "0"},
-    {"Barometric Presure", "psi", "0133", "2", "0", "37", "1", "14.7"},
+    {"Barometric Pressure", "psi", "0133", "2", "0", "37", "1", "14.7"},
     {"Reference Torque", "lbft", "0163", "3", "0", "500", "2", "445"},
-    {"Actual Torque", "%", "0162", "4", "-125", "125", "1", "0"}
+    {"Actual Torque", "%", "0162", "4", "-125", "125", "1", "0"},
+    {"Speed", "mph", "010D", "5", "0", "158", "1", "0"}
 };
 
 // Constructor initializes A and B
@@ -14,29 +15,41 @@ Commands::Commands() : A(0), B(0) {}
 
 // Send a command to the ELM327 and return the response
 String Commands::sendCommand(String pid) {
+    if (!connected || pWriteChar == nullptr) {
+        Serial.println("Cannot send command: No OBD connection");
+        return "";
+    }
     responseBuffer = "";
     String fullCmd = pid + "\r";
+    unsigned long start = millis();
+    Serial.println("Sending command: " + pid);
     pWriteChar->writeValue(fullCmd);
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 1000; i++) {
         delay(1);
         if (responseBuffer.indexOf(">") != -1) {
+            unsigned long end = millis();
+            unsigned long duration = end - start;
+            Serial.println("Response time: " + String(duration) + " | ResponseBuffer: " + responseBuffer);
             String fullResponse = responseBuffer;
             responseBuffer = "";
             return fullResponse;
         }
     }
+    Serial.println("Command " + pid + " timed out. Response buffer: " + responseBuffer);
     return "";
 }
 
 // Parse the response and set A and B
 void Commands::parsePIDResponse(String response, String pid, int numBytes) {
     String pidStr = pid.substring(2);
-    String searchStr = "41 " + pidStr + " ";
+    String searchStr = "41" + pidStr;
+    Serial.println("searchStr: " + searchStr);
     int idx = response.indexOf(searchStr);
     if (idx != -1) {
         int start = idx + searchStr.length();
         int end = start + (numBytes * 3) - 1;
         String hexBytes = response.substring(start, end);
+        Serial.println("start: " + String(start) + ", end: " + String(end) + ", hexBytes: " + hexBytes);
         hexBytes.trim();
         String byteStrs[numBytes];
         int byteIndex = 0;
@@ -55,15 +68,24 @@ void Commands::parsePIDResponse(String response, String pid, int numBytes) {
             A = -1;
             B = -1;
         }
+        Serial.printf("A: %.1d, B: %.1d\n", A, B);
     }
 }
 
 // Query a command and return the calculated value
 double Commands::query(int commandIndex) {
+    if (!connected || pWriteChar == nullptr) {
+        return 0.0; // Return default value if not connected
+    }
     String command = commandConfig[commandIndex][2];
     int numBytes = commandConfig[commandIndex][6].toInt();
     int formula = commandConfig[commandIndex][3].toInt();
     String response = sendCommand(command);
+
+    if (response == "") {
+        return 0.0;
+    }
+
     parsePIDResponse(response, command, numBytes);
     double val = 0.0;
     switch (formula) {
@@ -82,12 +104,18 @@ double Commands::query(int commandIndex) {
         case 4:
             val = (double)A - 125.00;
             return val;
+        case 5:
+            val = A * 0.621371;
+            return val;
         default:
             return -1.0;
     }
 }
 
 double Commands::getReading(int selectedReading) {
+    if (!connected || pWriteChar == nullptr) {
+        return 0.0; // Return default value if not connected
+    }
     switch (selectedReading) {
         case 0:
             // RPM
@@ -109,15 +137,18 @@ double Commands::getReading(int selectedReading) {
             double actual = query(4);
             return (ref * (actual / 100.0));
         }
+        case 3: {
+            // Horsepower
+            double rpm = query(0);
+            double refTorque = query(3);
+            double actualTorque = query(4);
+            return ((refTorque * (actualTorque / 100.0)) * rpm) / 5252.0;
+        }
+        case 5: {
+            // Speed
+            return query(5);
+        }
         default:
             return 0.0;
     }
-}
-
-// Initialize OBD communication
-void Commands::initializeOBD() {
-    sendCommand("ATZ");
-    sendCommand("ATSP6");
-    sendCommand("ATSH 7DF");
-    sendCommand("0100");
 }

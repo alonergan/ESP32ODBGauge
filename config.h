@@ -79,8 +79,8 @@
 /*
   Dual Gauge Params
 */
-#define DG_BAR_WIDTH 60
-#define DG_BAR_HEIGHT 180
+#define DG_BAR_WIDTH 40
+#define DG_BAR_HEIGHT 160
 #define DG_BAR_LINE_WIDTH 2
 #define DG_LABEL_SIZE 2
 #define DG_UNITS_SIZE 1

@@ -16,16 +16,16 @@ public:
     gaugeEraserLeft(display),
     gaugeEraserRight(display),
     stats(display),
-    valueLabelLeft(gaugeTypes[gaugeType][0]),
-    valueLabelRight(gaugeTypes[gaugeType][0]),
-    valueUnitsLeft(gaugeTypes[gaugeType][1]),
-    valueUnitsRight(gaugeTypes[gaugeType][1]),
+    valueLabelLeft(display),
+    valueLabelRight(display),
+    valueUnitsLeft(display),
+    valueUnitsRight(display),
     minValueLeft(gaugeTypes[gaugeType][2].toDouble()),
     minValueRight(gaugeTypes[gaugeType][2].toDouble()),
     maxValueLeft(gaugeTypes[gaugeType][3].toDouble()),
     maxValueRight(gaugeTypes[gaugeType][3].toDouble()),
-    valueTypeLeft(gaugeTypes[gaugeType][4]),
-    valueTypeRight(gaugeTypes[gaugeType][4]),
+    valueTypeLeft(display),
+    valueTypeRight(display),
     currentValueLeft(0),
     currentValueRight(0),
     oldValueLeft(0),
@@ -40,15 +40,28 @@ public:
       createLabel();
       createValue();
       plotValue(0.0);
+      render(0.0);
 
       // Initialize right gauge - TODO
     }
 
-    void render() override {
+    void render(double) override {
+      for (int i = 0; i < 7000; i++) {
+        updateBarGraph((double) i);
+        delay(10);
+      }
+
+      for (int i = 7000; i > 0; i--) {
+        updateBarGraph((double) i);
+        delay(10);
+      }
+    }
+
+    void reset() {
 
     }
 
-    void displayStats() override {
+    void displayStats(float fps, double frameAvg, double queryAvg) {
 
     }
 
@@ -58,8 +71,7 @@ public:
 
 private:
 
-    TFT_eSprite gaugeOutlineLeft, gaugeOutlineRight, gaugeMarkerLeft, gaugeMarkerRight, gaugeValueLeft, gaugeValueRight, gaugeEraserLeft, gaugeEraserRight, stats;
-    String valueLabelLeft, valueLableRight, valueUnitsLeft, valueUnitsRight, valueTypeLeft, valueTypeRight;
+    TFT_eSprite gaugeOutlineLeft, gaugeOutlineRight, gaugeMarkerLeft, gaugeMarkerRight, gaugeValueLeft, gaugeValueRight, gaugeEraserLeft, gaugeEraserRight, valueLabelLeft, valueLabelRight, valueUnitsLeft, valueUnitsRight, valueTypeLeft, valueTypeRight, stats;
     int16_t currentValueLeft, currentValueRight, oldValueLeft, oldValueRight;
     double minValueLeft, minValueRight, maxValueLeft, maxValueRight;
     static String gaugeTypes[4][5];
@@ -84,11 +96,20 @@ private:
       gaugeOutlineLeft.pushSprite(x, y);
     }
 
+    void updateBarGraph(double val) {
+      // Clear bar
+      gaugeOutlineLeft.fillRect(1, 1, DG_BAR_WIDTH - 2, DG_BAR_HEIGHT - 2, TFT_BLACK);
+
+      // Fill bar
+      double y = (val / 7000) * DG_BAR_HEIGHT;
+      gaugeOutlineLeft.fillRect(1, 1, DG_BAR_WIDTH - 2, (int) y, TFT_RED);
+    }
+
     void createLabel() {
       gaugeOutlineLeft.setFreeFont(FONT_BOLD_18);
       gaugeOutlineLeft.setTextColor(GAUGE_FG_COLOR);
-      int w = gaugeOutlineLeft.textWidth(valueLabelLeft);
-      int h = gaugeOutlineLeft.fontHeight(valueLabelLeft);
+      int w = gaugeOutlineLeft.textWidth("RPM");
+      int h = gaugeOutlineLeft.fontHeight();
       if (!valueLabelLeft.createSprite(w, h)) {
         Serial.println("Could not create valueLabelLeft sprite");
       }
@@ -96,7 +117,7 @@ private:
 
       valueLabelLeft.setFreeFont(FONT_BOLD_18);
       valueLabelLeft.setTextColor(GAUGE_FG_COLOR);
-      valueLabelLeft.drawString(valueLabelLeft, 0, 0);
+      valueLabelLeft.drawString("RPM", 0, 0);
 
       int xPos = (DISPLAY_WIDTH / 3)  - (w / 2);
       int yPos = (DISPLAY_HEIGHT / 2) - (DG_BAR_HEIGHT / 2) - h - 10;
@@ -117,7 +138,7 @@ private:
         gaugeValueLeft.setTextColor(VALUE_TEXT_COLOR, DISPLAY_BG_COLOR);
         int textWidth = 0;
 
-        if (valueTypeLeft == "int") {
+        if (true) {
             int intVal = (int)round(val);
             textWidth = gaugeValueLeft.textWidth(String(intVal));
             int x = (VALUE_WIDTH - textWidth) / 2;
@@ -136,7 +157,7 @@ private:
 };
 
 // Define and initialize static member outside class
-String NeedleGauge::gaugeTypes[4][5] = {
+String DualGauge::gaugeTypes[4][5] = {
     {"RPM", "", "0", "7000", "int"},
     {"BOOST", "psi", "0.0", "22.0", "double"},
     {"TORQUE", "lb-ft", "0", "445", "int"},

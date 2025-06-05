@@ -10,6 +10,7 @@ class Gauge {
 public:
     enum GaugeType {
         NEEDLE_GAUGE,
+        DUAL_GAUGE,
         G_METER,
         ACCELERATION_METER
     };

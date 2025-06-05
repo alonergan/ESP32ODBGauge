@@ -54,9 +54,9 @@ void setup() {
     gauges[5] = new GMeter(&display);
     gauges[6] = new AccelerationMeter(&display);
 
-    gauges[obdConnected ? 0 : 4]->initialize();
+    gauges[obdConnected ? 0 : 5]->initialize();
     if (!obdConnected) {
-        currentGauge = 4;
+        currentGauge = 5;
     }
 
     xTaskCreatePinnedToCore(dataFetchingTask, "DataFetching", 10000, NULL, 1, &dataTaskHandle, 0);
@@ -84,6 +84,20 @@ void dataFetchingTask(void* parameter) {
                     double reading = commands.getReading(gaugeIndex);
                     NeedleGauge* ng = static_cast<NeedleGauge*>(gauge);
                     ng->setReading(reading);
+                    vTaskDelay(100 / portTICK_PERIOD_MS); // 10Hz
+                } else {
+                    if (millis() - lastReconnectAttempt > RECONNECT_INTERVAL) {
+                        obdConnected = reconnectToOBD();
+                        lastReconnectAttempt = millis();
+                    }
+                    vTaskDelay(100 / portTICK_PERIOD_MS);
+                }
+                break;
+            case Gauge::DUAL_GAUGE:
+                if (obdConnected) {
+                    struct dualGaugeReading x = commands.getDualReading(); // Gets torque and horsepower
+                    DualGauge* dg = static_cast<DualGauge*>(gauge);
+                    dg->setReadings(x.readings[0], x.readings[1]);
                     vTaskDelay(100 / portTICK_PERIOD_MS); // 10Hz
                 } else {
                     if (millis() - lastReconnectAttempt > RECONNECT_INTERVAL) {

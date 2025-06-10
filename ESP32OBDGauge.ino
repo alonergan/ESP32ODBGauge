@@ -9,7 +9,7 @@
 #include "options_screen.h"
 #include "config.h"
 
-bool TESTMODE = true;
+bool TESTMODE = false;
 
 TFT_eSPI display = TFT_eSPI();
 Gauge* gauges[7];

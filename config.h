@@ -44,9 +44,10 @@
 /*
   Gauge params
 */
-#define GAUGE_WIDTH DISPLAY_HEIGHT
+#define GAUGE_WIDTH DISPLAY_HEIGHT + 2 // Add a small increase to width to prevent chord in arc outline
 #define GAUGE_HEIGHT DISPLAY_HEIGHT
 #define GAUGE_RADIUS GAUGE_HEIGHT / 2
+#define GAUGE_MARGIN_TOP 20
 #define GAUGE_ARC_WIDTH 50
 #define GAUGE_LINE_WIDTH 3
 #define GAUGE_START_ANGLE 60
@@ -55,11 +56,23 @@
 #define GAUGE_BG_COLOR DISPLAY_BG_COLOR
 #define GAUGE_LABEL_SIZE 3
 #define GAUGE_UNITS_SIZE 2
+#define SMOOTHING_FACTOR 0.20 // Alpha smoothing factor for interpolation of values
+
+/*
+  Tick Mark Params
+*/
+#define MAJOR_TICK_SPACING 30 // Angular spacing for major ticks in degrees
+#define MINOR_TICK_SPACING 10 // Angular spacing for minor ticks in degrees
+#define MAJOR_TICK_LENGTH 12  // Length of major ticks in pixels
+#define MINOR_TICK_LENGTH 6   // Length of minor ticks in pixels
+#define MAJOR_TICK_THICKNESS 3 // Thickness of major ticks in pixels
+#define MINOR_TICK_THICKNESS 1 // Thickness of minor ticks in pixels
 
 /* 
   Needle Params 
 */
-#define NEEDLE_WIDTH 10
+#define NEEDLE_SPRITE_WIDTH 5
+#define NEEDLE_WIDTH 5
 #define NEEDLE_LENGTH 45
 #define NEEDLE_RADIUS 115
 #define NEEDLE_COLOR_PRIMARY TFT_RED

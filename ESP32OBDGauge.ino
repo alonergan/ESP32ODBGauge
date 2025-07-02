@@ -9,7 +9,7 @@
 #include "options_screen.h"
 #include "config.h"
 
-bool TESTMODE = false;
+bool TESTMODE = true;
 
 TFT_eSPI display = TFT_eSPI();
 Gauge* gauges[7];
@@ -24,7 +24,7 @@ bool inOptionsScreen = false;
 void setup() {
     Serial.begin(115200);
     display.begin();
-    display.setRotation(1);
+    display.setRotation(3);
     touch_init(DISPLAY_WIDTH, DISPLAY_HEIGHT, display.getRotation());
 
     // Show splash screen
@@ -201,12 +201,12 @@ void loop() {
         xSemaphoreTake(gaugeMutex, portMAX_DELAY);
         gauges[currentGauge]->render(0.0);
         xSemaphoreGive(gaugeMutex);
-        if (obdConnected) {
-            display.drawRect(0, 0, 10, 10, TFT_GREEN);
-        }
-        else {
-            display.drawRect(0, 0, 10, 10, TFT_RED);
-        }
+        //if (obdConnected) {
+            //display.drawRect(0, 0, 10, 10, TFT_GREEN);
+        //}
+        //else {
+            //display.drawRect(0, 0, 10, 10, TFT_RED);
+        //}
     }
 
     // Limit to ~100 FPS

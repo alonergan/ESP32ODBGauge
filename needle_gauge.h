@@ -29,7 +29,7 @@ public:
 
     void initialize() override {
         display->fillScreen(DISPLAY_BG_COLOR);
-        display->setPivot(DISPLAY_CENTER_X, DISPLAY_CENTER_Y);
+        display->setPivot(DISPLAY_CENTER_X, DISPLAY_CENTER_Y + GAUGE_MARGIN_TOP);
         createOutline();
         createNeedle();
         createValue();
@@ -109,12 +109,8 @@ public:
             plotValue(sweepValue);
         } else {
             double targetAngle = calculateAngle(targetValue);
-            currentAngle += 0.20 * (targetAngle - currentAngle); // Smoothing factor
-            if (abs(currentAngle - oldAngle) > 1) {
-                gaugeEraser.pushRotated(oldAngle);
-                plotNeedle(currentAngle);
-                oldAngle = currentAngle;
-            }
+            currentAngle += SMOOTHING_FACTOR * (targetAngle - currentAngle); // Smoothing factor in config
+            plotNeedle(currentAngle);
             plotValue(targetValue);
         }
     }
@@ -171,34 +167,61 @@ private:
             return;
         }
         gaugeOutline.fillSprite(GAUGE_BG_COLOR);
-        gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS - GAUGE_LINE_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, outlineColor, GAUGE_BG_COLOR, true);
-        gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS, GAUGE_RADIUS - GAUGE_LINE_WIDTH - GAUGE_ARC_WIDTH, GAUGE_RADIUS - (GAUGE_LINE_WIDTH * 2) - GAUGE_ARC_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, outlineColor, GAUGE_BG_COLOR, true);
+        gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS + GAUGE_MARGIN_TOP, GAUGE_RADIUS, GAUGE_RADIUS - GAUGE_LINE_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, outlineColor, GAUGE_BG_COLOR, true);
+        gaugeOutline.drawSmoothArc(GAUGE_RADIUS, GAUGE_RADIUS + GAUGE_MARGIN_TOP, GAUGE_RADIUS - GAUGE_LINE_WIDTH - GAUGE_ARC_WIDTH, GAUGE_RADIUS - (GAUGE_LINE_WIDTH * 2) - GAUGE_ARC_WIDTH, GAUGE_START_ANGLE, GAUGE_END_ANGLE, outlineColor, GAUGE_BG_COLOR, true);
 
+        /*
+        // Add major and minor tick marks
+        int centerX = GAUGE_RADIUS;
+        int centerY = GAUGE_RADIUS + GAUGE_MARGIN_TOP;
+
+        // Draw major ticks
+        for (double angleDeg = 150.0; angleDeg <= 390; angleDeg += MAJOR_TICK_SPACING) {
+            double angleRad = angleDeg * PI / 180.0;
+            int outerX = centerX + GAUGE_RADIUS * cos(angleRad);
+            int outerY = centerY + GAUGE_RADIUS * sin(angleRad);
+            int innerX = centerX + (GAUGE_RADIUS - MAJOR_TICK_LENGTH) * cos(angleRad);
+            int innerY = centerY + (GAUGE_RADIUS - MAJOR_TICK_LENGTH) * sin(angleRad);
+            gaugeOutline.drawWideLine(outerX, outerY, innerX, innerY, MAJOR_TICK_THICKNESS, outlineColor);
+        }
+
+        // Draw minor ticks (skip angles where major ticks are drawn)
+        for (double angleDeg = 150; angleDeg <= 390; angleDeg += MINOR_TICK_SPACING) {
+            if (fmod(angleDeg + 120.0, MAJOR_TICK_SPACING) != 0) { // Avoid overlap with major ticks
+                double angleRad = angleDeg * PI / 180.0;
+                int outerX = centerX + GAUGE_RADIUS * cos(angleRad);
+                int outerY = centerY + GAUGE_RADIUS * sin(angleRad);
+                int innerX = centerX + (GAUGE_RADIUS - MINOR_TICK_LENGTH) * cos(angleRad);
+                int innerY = centerY + (GAUGE_RADIUS - MINOR_TICK_LENGTH) * sin(angleRad);
+                gaugeOutline.drawWideLine(outerX, outerY, innerX, innerY, MINOR_TICK_THICKNESS, outlineColor);
+            }
+        }
+        */
 
         gaugeOutline.setFreeFont(FONT_BOLD_14);
         gaugeOutline.setTextColor(outlineColor);
         int textWidth = gaugeOutline.textWidth(valueLabel);
         int x = (GAUGE_WIDTH - textWidth) / 2;
-        gaugeOutline.drawString(valueLabel, x, GAUGE_RADIUS - 20);
+        gaugeOutline.drawString(valueLabel, x, GAUGE_RADIUS + GAUGE_MARGIN_TOP - 20);
         gaugeOutline.unloadFont();
 
         gaugeOutline.setFreeFont(FONT_NORMAL_8);
         textWidth = gaugeOutline.textWidth(valueUnits);
         x = (GAUGE_WIDTH - textWidth) / 2;
-        gaugeOutline.drawString(valueUnits, x, GAUGE_RADIUS + 20);
+        gaugeOutline.drawString(valueUnits, x, GAUGE_RADIUS + GAUGE_MARGIN_TOP + 20);
         gaugeOutline.unloadFont();
     }
 
     void createNeedle() {
-        if (!gaugeNeedle.createSprite(NEEDLE_WIDTH, NEEDLE_LENGTH)) {
+        if (!gaugeNeedle.createSprite(NEEDLE_SPRITE_WIDTH, NEEDLE_LENGTH)) {
             Serial.println("Failed to create needle sprite");
             return;
         }
         gaugeNeedle.fillSprite(GAUGE_BG_COLOR);
-        uint16_t pivX = NEEDLE_WIDTH / 2;
+        uint16_t pivX = NEEDLE_SPRITE_WIDTH / 2;
         uint16_t pivY = NEEDLE_RADIUS;
         gaugeNeedle.setPivot(pivX, pivY);
-        gaugeNeedle.fillRect(pivX - 1, 2, 3, NEEDLE_LENGTH, needleColor);
+        gaugeNeedle.fillRect(pivX - 1, 2, NEEDLE_WIDTH, NEEDLE_LENGTH, needleColor);
     }
 
     void createValue() {
@@ -212,20 +235,29 @@ private:
     }
 
     void createEraser() {
-        if (!gaugeEraser.createSprite(NEEDLE_WIDTH, NEEDLE_LENGTH)) {
+        if (!gaugeEraser.createSprite(NEEDLE_SPRITE_WIDTH + 3, NEEDLE_LENGTH)) {
             Serial.println("Failed to create needle sprite");
             return;
         }
         gaugeEraser.fillSprite(GAUGE_BG_COLOR);
-        int pivX = NEEDLE_WIDTH / 2;
+        int pivX = NEEDLE_SPRITE_WIDTH / 2;
         int pivY = NEEDLE_RADIUS;
         gaugeEraser.setPivot(pivX, pivY);
     }
 
-    void plotNeedle(double angle) {
-        gaugeEraser.pushRotated(oldAngle);
-        gaugeNeedle.pushRotated((int16_t)angle);
-        oldAngle = (int16_t)angle;
+    void plotNeedle(double newAngle) {
+        // Only erase previous needles if value is decreasing
+        if ((newAngle - oldAngle) < 0) {
+            gaugeEraser.pushRotated(oldAngle);
+        }
+
+        // Push one degree less for pattern effect
+        if ((int16_t)newAngle != -120) {
+            gaugeNeedle.pushRotated(((int16_t)newAngle - 1));
+        }
+
+        gaugeNeedle.pushRotated((int16_t)newAngle);
+        oldAngle = (int16_t)newAngle;
     }
 
     void plotValue(double val) {
@@ -243,7 +275,7 @@ private:
             int x = (VALUE_WIDTH - textWidth) / 2;
             gaugeValue.drawFloat(val, 1, x, 0);
         }
-        gaugeValue.pushSprite(VALUE_X, VALUE_Y);
+        gaugeValue.pushSprite(VALUE_X, VALUE_Y + GAUGE_MARGIN_TOP);
         gaugeValue.unloadFont();
     }
 
